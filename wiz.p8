@@ -7,12 +7,17 @@ function _init()
 	gamestates = {"standby","turn","collide","menu","cast"}
 	gamestate = gamestates[1]
 	walls = {0}
-	init_spellbook()
-	init_player()
-	init_cast()
+	
 	dirx={-1,1,0,0,1,1,-1,-1}
 	diry={0,0,-1,1,-1,1,1,-1}
 	debug = {}
+	--expected data {{{sprites}{x,y}},...}
+	ani_queue = {}
+	mobs = {}
+	
+	init_spellbook()
+	init_player()
+	init_cast()
 end
 
 function _update()
@@ -21,10 +26,8 @@ function _update()
 	if gamestate == "standby" then
 		update_player()
 	elseif gamestate== "turn" then
-		move_player()
+		move_all_mobs()
 		--move enemies
-	elseif gamestate== "collide" then
-		move_player()
 	elseif gamestate=="menu" then
 		update_menu()
 	elseif gamestate=="cast" then
@@ -35,7 +38,7 @@ end
 function _draw()
 	map(0)
 	print(gamestate,8)
-	draw_player()
+	draw_all_mobs()
 	draw_hp()
 	draw_selected_spell()
 	draw_debug()
@@ -50,13 +53,13 @@ end
 function draw_hp()
 	rectfill(0,0, 29,8,0)
 	rect(0,0,29,8,6)
-	print("♥"..player.hp.."/"..player.maxhp, 1,2)
+	print("♥"..mobs[1].hp.."/"..mobs[1].maxhp, 1,2)
 end
 
 function draw_selected_spell()
 	rectfill(118,0,127,9,1)
 	rect(118,0,127,9,12)
-	local spell = player.spells[player.spell_index]
+	local spell = mobs[1].spells[mobs[1].spell_index]
 	sspr(spell.icon.x,spell.icon.y,8,8,119,1,8,8)
 end
 
@@ -67,6 +70,29 @@ function draw_debug()
 		print(txt)
 	end
 end
+
+function do_animations()
+
+end
+
+function move_all_mobs()
+	local unfinished = false
+	for mob in all(mobs) do
+		local state = move_mob(mob)
+		if not state then
+			unfinished = true
+		end
+	end
+	if not unfinished then
+		gamestate = "standby"
+	end
+end
+
+function draw_all_mobs()
+	for mob in all(mobs) do
+		draw_mob(mob)
+	end
+end
 -->8
 -- player
 function init_player()
@@ -75,54 +101,51 @@ function init_player()
 		y=8,
 		ox=0,
 		oy=0,
-		speed = 2,
 		sprites={240, 241},
 		flipx=false,
 		hp = 50,
 		maxhp = 50,
 		spell_index=1,
 		spells={},
+		collide=false
 	}
 	add(player.spells,spellbook[1])
 	add(player.spells,spellbook[2])
 	add(player.spells,spellbook[3])
+	add(mobs,player)
 end
 
 function update_player()
 	if(btnp(2)) then
-		player.y-=1
-		player.oy=8
-		if detect_collision(player.x,player.y,walls) then
-			gamestate="collide"
-		else
-			gamestate="turn"
+		mobs[1].y-=1
+		mobs[1].oy=8
+		if detect_collision(mobs[1].x,mobs[1].y,walls) then
+			mobs[1].collide=true
 		end
+		gamestate="turn"
 	elseif(btnp(3)) then
-		player.y+=1
-		player.oy=-8
-		if detect_collision(player.x,player.y,walls) then
-			gamestate="collide"
-		else
-			gamestate="turn"
+		mobs[1].y+=1
+		mobs[1].oy=-8
+		if detect_collision(mobs[1].x,mobs[1].y,walls) then
+			mobs[1].collide=true
 		end
+		gamestate="turn"
 	elseif(btnp(0)) then
-		player.x-=1 
-		player.ox=8
-		player.flip=false
-		if detect_collision(player.x,player.y,walls) then
-			gamestate="collide"
-		else
-			gamestate="turn"
+		mobs[1].x-=1 
+		mobs[1].ox=8
+		mobs[1].flip=false
+		if detect_collision(mobs[1].x,mobs[1].y,walls) then
+			mobs[1].collide=true
 		end
+		gamestate="turn"
 	elseif(btnp(1)) then
-		player.x+=1
-		player.ox=-8
-		player.flip=true
-		if detect_collision(player.x,player.y,walls) then
-			gamestate="collide"
-		else
-			gamestate="turn"
+		mobs[1].x+=1
+		mobs[1].ox=-8
+		mobs[1].flip=true
+		if detect_collision(mobs[1].x,mobs[1].y,walls) then
+			mobs[1].collide=true
 		end
+		gamestate="turn"
 	elseif(btnp(4)) then
 		gamestate = "menu"
 	elseif(btnp(5)) then
@@ -131,39 +154,41 @@ function update_player()
 	end
 end
 
-function move_player()
-	if (gamestate == "collide"
-	and detect_collision(player.x,player.y,walls)) then
-		if abs(player.ox) == 4 then
-		 local sign = sgn(player.ox)
-			player.x += (1*sign)
-			player.ox *= -1
+function move_mob(mob)
+	if (mob.collide
+	and detect_collision(mob.x,mob.y,walls)) then
+		if abs(mob.ox) == 4 then
+		 local sign = sgn(mob.ox)
+			mob.x += (1*sign)
+			mob.ox *= -1
 		end
-		if abs(player.oy) == 4 then
-			local sign = sgn(player.oy)
-			player.y += (1*sign)
-			player.oy *= -1
+		if abs(mob.oy) == 4 then
+			local sign = sgn(mob.oy)
+			mob.y += (1*sign)
+			mob.oy *= -1
 		end
 	end
- if player.ox < 0 then
- 	player.ox += 1
- elseif player.ox > 0 then
-  player.ox -= 1
- end
- if player.oy < 0 then
- 	player.oy += 1
- elseif player.oy > 0 then
-  player.oy -= 1
- end
- if player.ox == 0 
- and player.oy == 0 then
- 	gamestate = "standby"
- end
+	if mob.ox < 0 then
+		mob.ox += 1
+	elseif mob.ox > 0 then
+	mob.ox -= 1
+	end
+	if mob.oy < 0 then
+		mob.oy += 1
+	elseif mob.oy > 0 then
+	mob.oy -= 1
+	end
+	if mob.ox == 0 
+	and mob.oy == 0 then
+		return true
+	else
+		return false
+	end
 end
 
-function draw_player()
- local sprite = get_frame(player.sprites,8)
-	spr(sprite,(player.x*8)+player.ox,(player.y*8)+player.oy,1,1,player.flip)
+function draw_mob(mob)
+ local sprite = get_frame(mob.sprites,8)
+	spr(sprite,(mob.x*8)+mob.ox,(mob.y*8)+mob.oy,1,1,mob.flip)
 end
 
 
