@@ -354,24 +354,21 @@ function line_points(x1,y1,x2,y2)
 			endang=360
 		end
 	end
-	local retries = 0
-	while retries < 2 do
-		for i=startang,endang do
-			dx=cos(i/360)
-			dy=sin(i/360)
-			local result = dofov(dx,dy,x1,y1,r)
-			if includes_point(result,{x=x2,y=y2}) then
-				for point in all(result) do
-					if not includes_point(visible, point) then
-						add(visible,point)
-					end
+	for i=startang,endang do
+		dx=cos(i/360)
+		dy=sin(i/360)
+		local result = dofov(dx,dy,x1,y1,r)
+		if includes_point(result,{x=x2,y=y2}) then
+			for point in all(result) do
+				if not includes_point(visible, point) then
+					add(visible,point)
 				end
 			end
+			break
 		end
-		if #visible > 1 then
-			return visible
-		end
-		retries += 1
+	end
+	if #visible < 1 then
+		return get_line_points(x1,y1,x2,y2)
 	end
 	return visible
 end
@@ -635,7 +632,7 @@ function init_spellbook()
 				description="deals 8 dmg",
 				spelltype= spelltypes[2],
 				ani={160,161,162,163},
-				range=10,
+				range=6,
 				radius=1
 			},
 			{
