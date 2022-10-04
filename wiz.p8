@@ -11,10 +11,13 @@ function _init()
 	dirx={-1,1,0,0,1,1,-1,-1}
 	diry={0,0,-1,1,-1,1,1,-1}
 	debug = {}
-	--expected data {{{sprites}{x,y}},...}
+	--expected data {{{sprites}{{x,y},...}},...}
 	ani_queue = {}
 	mobs = {}
-	
+	tframe = -1
+	move_complete = true
+	ani_complete = true
+
 	init_spellbook()
 	init_player()
 	init_cast()
@@ -26,7 +29,10 @@ function _update()
 	if gamestate == "standby" then
 		update_player()
 	elseif gamestate== "turn" then
-		move_all_mobs()
+		move_complete = move_all_mobs()
+		if move_complete and ani_complete then
+			set_state("standby")
+		end
 		--move enemies
 	elseif gamestate=="menu" then
 		update_menu()
@@ -42,11 +48,27 @@ function _draw()
 	draw_hp()
 	draw_selected_spell()
 	draw_debug()
-	if gamestate == "menu" then
+	if gamestate == "turn" then
+		ani_complete = do_animations(tframe)
+	elseif gamestate == "menu" then
 		draw_menu()
 		draw_spell_description()
 	elseif gamestate=="cast" then
 		draw_cast()
+	end
+end
+
+function set_state(state)
+	if state == "standby" then
+		gamestate = state
+		tframe = -1
+	elseif state == "turn" then
+		gamestate = state
+		tframe=frame
+	elseif state == "menu" then
+		gamestate = state
+	elseif state == "cast" then
+		gamestate = state
 	end
 end
 
@@ -71,8 +93,23 @@ function draw_debug()
 	end
 end
 
-function do_animations()
-
+function do_animations(sframe)
+	local unfinished = false
+	if sframe < 0 then
+		return true
+	end
+	for pair in all(ani_queue) do
+		local sprite = get_frame(frame-sframe,pair[1],2)
+		for point in all(pair[2]) do
+			spr(sprite,point.x*8,point.y*8,1,1)
+		end	
+		if sprite == pair[1][#pair[1]] or #pair[2]==0 then
+			del(ani_queue, pair)
+		else
+			unfinished = true
+		end
+	end
+	return not unfinished
 end
 
 function move_all_mobs()
@@ -83,9 +120,7 @@ function move_all_mobs()
 			unfinished = true
 		end
 	end
-	if not unfinished then
-		gamestate = "standby"
-	end
+	return not unfinished
 end
 
 function draw_all_mobs()
@@ -187,7 +222,7 @@ function move_mob(mob)
 end
 
 function draw_mob(mob)
- local sprite = get_frame(mob.sprites,8)
+ local sprite = get_frame(frame,mob.sprites,8)
 	spr(sprite,(mob.x*8)+mob.ox,(mob.y*8)+mob.oy,1,1,mob.flip)
 end
 
@@ -195,8 +230,8 @@ end
 -->8
 -- helper functions
 
-function get_frame(sprites,speed)
- return	sprites[flr(frame/speed)%#sprites+1]
+function get_frame(sframe,sprites,speed)
+ return	sprites[flr(sframe/speed)%#sprites+1]
 end
 
 function detect_collision(x,y,flags)
@@ -214,23 +249,6 @@ end
 --  implement array includes func
 
 function fov(x,y,r)
-	local function dofov(x,y,px,py,r)
-		local ox,oy
-		local visible = {}
-		ox=px+0.5
-		oy=py+0.5
-		for i=0,r do
-			local flag = fget(mget(ox,oy))
-			if flag != 1 then
-				add(visible,{x=flr(ox),y=flr(oy)})
-			else
-				break	
-			end
-			ox+=x
-			oy+=y
-		end
-		return visible
-	end
 	local dx,dy
 	local visible = {}
 	for i=0,360 do
@@ -242,6 +260,24 @@ function fov(x,y,r)
 					add(visible,point)
 				end
 		end
+	end
+	return visible
+end
+
+function dofov(x,y,px,py,r)
+	local ox,oy
+	local visible = {}
+	ox=px+0.5
+	oy=py+0.5
+	for i=0,r do
+		local flag = fget(mget(ox,oy))
+		if flag != 1 then
+			add(visible,{x=flr(ox),y=flr(oy)})
+		else
+			break	
+		end
+		ox+=x
+		oy+=y
 	end
 	return visible
 end
@@ -293,6 +329,51 @@ function get_line_points(x1,y1,x2,y2)
 		i+=1
 	end
 	return path
+end
+
+function line_points(x1,y1,x2,y2)
+	local r = distance(x1,y1,x2,y2)
+	local dx,dy
+	local visible = {}
+	local sgnx, sgny = sgn(x2-x1),sgn(y2-y1)
+	local startang, endang
+	if sgnx==-1 then
+		if sgny == -1 then
+			startang = 90
+			endang = 180
+		else
+			startang = 180
+			endang = 270
+		end
+	else
+		if sgny == -1 then
+			startang=0
+			endang=90
+		else
+			startang=270
+			endang=360
+		end
+	end
+	local retries = 0
+	while retries < 2 do
+		for i=startang,endang do
+			dx=cos(i/360)
+			dy=sin(i/360)
+			local result = dofov(dx,dy,x1,y1,r)
+			if includes_point(result,{x=x2,y=y2}) then
+				for point in all(result) do
+					if not includes_point(visible, point) then
+						add(visible,point)
+					end
+				end
+			end
+		end
+		if #visible > 1 then
+			return visible
+		end
+		retries += 1
+	end
+	return visible
 end
 
 -- only works for radius 2 not sure why
@@ -436,7 +517,7 @@ function update_cast()
 		if player.spells[player.spell_index].spelltype == "ball" then
 			target = get_circle_points(targetp.x,targetp.y,player.spells[player.spell_index].radius)
 		elseif player.spells[player.spell_index].spelltype == "bolt" then
-			target = get_line_points(player.x,player.y, targetp.x, targetp.y)
+			target = line_points(player.x,player.y, targetp.x, targetp.y)
 		elseif player.spells[player.spell_index].spelltype == "fan" then
 			target = get_cone_points(player.x,player.y,targetp.x,targetp.y,player.spells[player.spell_index].radius)
 			end
@@ -447,10 +528,11 @@ function update_cast()
 		gamestate="standby"
 		
 	elseif(btnp(5))then
+		add(ani_queue, {player.spells[player.spell_index].ani, target})
+		--select spell then standby
 		reset_range()
 		reset_target()
-		--select spell then standby
-		gamestate="standby"
+		set_state("turn")
 	elseif(btnp(0))then
 		local newx = targetp.x - 1
 		if includes_point(points,{x=newx,y=targetp.y}) then
@@ -536,7 +618,7 @@ function init_spellbook()
 				uses=15,
 				description="heals 1 ally",
 				icon={x=0,y=64},
-				ani={},
+				ani={160,161,162,163},
 				spelltype = spelltypes[1],
 				radius=0.5,
 				mtype="heal",
@@ -552,6 +634,7 @@ function init_spellbook()
 				icon={x=8,y=64},
 				description="deals 8 dmg",
 				spelltype= spelltypes[2],
+				ani={160,161,162,163},
 				range=10,
 				radius=1
 			},
@@ -562,7 +645,7 @@ function init_spellbook()
 				description="fire but fan",
 				icon={x=32,y=64},
 				ani={},
-				spelltype = spelltypes[3],
+				spelltype = spelltypes[1],
 				radius=1.5,
 				mtype="heal",
 				range=4,
@@ -650,14 +733,14 @@ aaa00a00777767770a00a0a00b0000b0800080800000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000aaaa00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000000000000000000aaaa000a0000a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000aa0000a0000a0a000000a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000aa00000a00a000a0000a0a000000a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000aa00000a00a000a0000a0a000000a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000aa0000a0000a0a000000a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000000000000000000aaaa000a0000a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000aaaa00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
