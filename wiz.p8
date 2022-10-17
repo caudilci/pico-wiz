@@ -1,5 +1,5 @@
 pico-8 cartridge // http://www.pico-8.com
-version 33
+version 38
 __lua__
 -- game state
 function _init()
@@ -21,6 +21,7 @@ function _init()
 	init_spellbook()
 	init_player()
 	init_cast()
+	init_enemies()
 end
 
 function _update()
@@ -373,41 +374,37 @@ function line_points(x1,y1,x2,y2)
 	return visible
 end
 
--- only works for radius 2 not sure why
-function get_cone_points(x,y,x1,y1,w)
-	local function inTriangle(x,y,x1,y1,x2,y2,px,py)
-		local s1 = y2-y
-		local s2 = x2-x
-		local s3 = y1-y
-		local s4 = py-y
-		local w1 = (x*s1+s4*s2-px*s1)/(s3*s2-(x1-x)*s1)
-		local w2 = (s4-w1*s4)/s1
-		return w1>=0 and w2 >=0 and (w1+w2)<=1
-	end
-	-- possible algorithm for circle tangent line??
-	local cone = {}
-	local dx = x1-x
-	local dy = y1-y
-	local pdx,pdy = normalize(dy,dx)
-	pdx= pdx*w
-	pdy= pdy*w
-	local fan = {}
-	local ax, ay = getcloser(x,y,x1,y1)
-	local bx, by = x1-pdx, y1+pdy
-	local cx, cy = x1+pdx, y1-pdy
-	local minx = min(ax,min(bx,cx))
-	local maxx = max(ax,max(bx,cx))
-	local miny = min(ay,min(by,cy))
-	local maxy = max(ay,max(by,cy))
-	for i=minx,maxx do
-		for j=miny,maxy do
-			if inTriangle(ax,ay,bx,by,cx,cy,i,j) then
-				add(fan, {x=i,y=j})
+function inTriangle(x,y,x1,y1,x2,y2,px,py)
+	local s1 = y2-y
+	local s2 = x2-x
+	local s3 = y1-y
+	local s4 = py-y
+	local w1 = (x*s1+s4*s2-px*s1)/(s3*s2-(x1-x)*s1)
+	local w2 = (s4-w1*s4)/s1
+	return w1>=0 and w2 >=0 and (w1+w2)<=1
+end
+
+-- wa is width in terms of degrees
+function get_cone_points(x,y,x1,y1,wa,r)
+	local visible = {}
+	local deltax,deltay = x1-x,y1-y
+	local angle = atan2(deltax,deltay)
+	local degang = angle*360
+	local s = degang - wa/2
+	local e = degang + wa/2
+	local countdir = sgn(e-s)
+	for i=s,e,countdir do
+		local dx=cos(i/360)
+		local dy=sin(i/360)
+		local result = dofov(dx,dy,x,y,r)
+		for point in all(result) do
+			if not includes_point(visible, point) then
+				add(visible,point)
 			end
 		end
 	end
-	return fan
-
+	del(visible,{x=x,y=y})
+	return visible
 end
 
 
@@ -516,7 +513,7 @@ function update_cast()
 		elseif player.spells[player.spell_index].spelltype == "bolt" then
 			target = line_points(player.x,player.y, targetp.x, targetp.y)
 		elseif player.spells[player.spell_index].spelltype == "fan" then
-			target = get_cone_points(player.x,player.y,targetp.x,targetp.y,player.spells[player.spell_index].radius)
+			target = get_cone_points(player.x,player.y,targetp.x,targetp.y,player.spells[player.spell_index].radius, player.spells[player.spell_index].range)
 			end
 	end
 	if(btnp(4))then
@@ -569,7 +566,6 @@ function highlight_range()
 end
 
 function highlight_target()
-	mset(targetp.x, targetp.y, 5)
 	for point in all(target) do
 		local flag = fget(mget(point.x,point.y))
 		if flag != 1 then
@@ -577,6 +573,11 @@ function highlight_target()
 		else
 			mset(point.x,point.y,6)
 		end
+	end
+	if frame%30<20 then
+		mset(targetp.x, targetp.y, 7)
+	else
+		mset(targetp.x, targetp.y, 5)
 	end
 end
 
@@ -602,6 +603,22 @@ end
 
 -->8
 -- enemy
+
+function init_enemies()
+	add(mobs, {
+		x=12,
+		y=12,
+		ox=0,
+		oy=0,
+		sprites={192, 193},
+		flipx=false,
+		hp = 50,
+		maxhp = 50,
+		spell_index=1,
+		spells={},
+		collide=false
+	})
+end
 -->8
 --map gen
 -->8
@@ -641,23 +658,24 @@ function init_spellbook()
 				uses=15,
 				description="fire but fan",
 				icon={x=32,y=64},
-				ani={},
-				spelltype = spelltypes[1],
-				radius=1.5,
+				ani={160,161,162,163},
+				spelltype = spelltypes[3],
+				-- in fan type spells radius is an angle in degrees
+				radius=30,
 				mtype="heal",
 				range=4,
 			},
 		}
 end
 __gfx__
-000000007666666600000000ccccccccccccccccbbbbbbbbbbbbbbbb000000000000000000000000000000000000000000000000000000000000000000000000
-000000006dddddd100000000cccccccccdddddd1bbbbbbbbbdddddd1000000000000000000000000000000000000000000000000000000000000000000000000
-007007006d1111d100000000cccccccccd1111d1bbbbbbbbbd1111d1000000000000000000000000000000000000000000000000000000000000000000000000
-000770006d1dd6d100000000cccccccccd1ddcd1bbbbbbbbbd1ddbd1000000000000000000000000000000000000000000000000000000000000000000000000
-000770006d1dd6d100000000cccccccccd1ddcd1bbbbbbbbbd1ddbd1000000000000000000000000000000000000000000000000000000000000000000000000
-007007006d6667d100000000cccccccccdccccd1bbbbbbbbbdbbbbd1000000000000000000000000000000000000000000000000000000000000000000000000
-000000006dddddd100000060cccccccccdddddd1bbbbbbbbbdddddd1000000000000000000000000000000000000000000000000000000000000000000000000
-000000001111111100000000cccccccc11111111bbbbbbbb11111111000000000000000000000000000000000000000000000000000000000000000000000000
+000000007666666600000000ccccccccccccccccbbbbbbbbbbbbbbbb333333330000000000000000000000000000000000000000000000000000000000000000
+000000006dddddd100000000cccccccccdddddd1bbbbbbbbbdddddd1333333330000000000000000000000000000000000000000000000000000000000000000
+007007006d1111d100000000cccccccccd1111d1bbbbbbbbbd1111d1333333330000000000000000000000000000000000000000000000000000000000000000
+000770006d1dd6d100000000cccccccccd1ddcd1bbbbbbbbbd1ddbd1333333330000000000000000000000000000000000000000000000000000000000000000
+000770006d1dd6d100000000cccccccccd1ddcd1bbbbbbbbbd1ddbd1333333330000000000000000000000000000000000000000000000000000000000000000
+007007006d6667d100000000cccccccccdccccd1bbbbbbbbbdbbbbd1333333330000000000000000000000000000000000000000000000000000000000000000
+000000006dddddd100000060cccccccccdddddd1bbbbbbbbbdddddd1333333330000000000000000000000000000000000000000000000000000000000000000
+000000001111111100000000cccccccc11111111bbbbbbbb11111111333333330000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
