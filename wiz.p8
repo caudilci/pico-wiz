@@ -438,7 +438,7 @@ function update_mob_pos(mob, x,y)
 		mob.ox=8
 		mob.flip =false
 		if detect_collision(mob.x,mob.y,walls) then
-			mobs[1].collide=true
+			mob.collide=true
 		end
 	elseif(dx<0) then
 		mob.x=x
@@ -467,10 +467,10 @@ function update_menu()
 			player.spell_index-=1
 		end
 	elseif(btnp(4))then
-		gamestate="standby"
+		set_state("standby")
 	elseif(btnp(5))then
 		--select spell then standby
-		gamestate="standby"
+		set_state("standby")
 	end
 end
 
@@ -533,7 +533,7 @@ function update_cast()
 	if(btnp(4))then
 		reset_range()
 		reset_target()
-		gamestate="standby"
+		set_state("standby")
 		
 	elseif(btnp(5))then
 		add(ani_queue, {player.spells[player.spell_index].ani, target})
