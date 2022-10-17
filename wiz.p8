@@ -64,6 +64,7 @@ function set_state(state)
 		gamestate = state
 		tframe = -1
 	elseif state == "turn" then
+		update_enemies()
 		gamestate = state
 		tframe=frame
 	elseif state == "menu" then
@@ -153,39 +154,21 @@ end
 
 function update_player()
 	if(btnp(2)) then
-		mobs[1].y-=1
-		mobs[1].oy=8
-		if detect_collision(mobs[1].x,mobs[1].y,walls) then
-			mobs[1].collide=true
-		end
-		gamestate="turn"
+		update_mob_pos(player, player.x,player.y-1)
+		set_state("turn")
 	elseif(btnp(3)) then
-		mobs[1].y+=1
-		mobs[1].oy=-8
-		if detect_collision(mobs[1].x,mobs[1].y,walls) then
-			mobs[1].collide=true
-		end
-		gamestate="turn"
+		update_mob_pos(player, player.x,player.y+1)
+		set_state("turn")
 	elseif(btnp(0)) then
-		mobs[1].x-=1 
-		mobs[1].ox=8
-		mobs[1].flip=false
-		if detect_collision(mobs[1].x,mobs[1].y,walls) then
-			mobs[1].collide=true
-		end
-		gamestate="turn"
+		update_mob_pos(player, player.x-1,player.y)
+		set_state("turn")
 	elseif(btnp(1)) then
-		mobs[1].x+=1
-		mobs[1].ox=-8
-		mobs[1].flip=true
-		if detect_collision(mobs[1].x,mobs[1].y,walls) then
-			mobs[1].collide=true
-		end
-		gamestate="turn"
+		update_mob_pos(player, player.x+1,player.y)
+		set_state("turn")
 	elseif(btnp(4)) then
-		gamestate = "menu"
+		set_state("menu")
 	elseif(btnp(5)) then
-		gamestate = "cast"
+		set_state("cast")
 		init_cast()
 	end
 end
@@ -435,6 +418,37 @@ function getcloser(x1,y1,x2,y2)
 	end
 	return bx,by
 end
+
+function update_mob_pos(mob, x,y)
+	local dx,dy = mob.x-x,mob.y-y
+	if(dy>0) then
+		mob.y=y
+		mob.oy=8
+		if detect_collision(mob.x,mob.y,walls) then
+			mob.collide=true
+		end
+	elseif(dy<0) then
+		mob.y=y
+		mob.oy=-8
+		if detect_collision(mob.x,mob.y,walls) then
+			mob.collide=true
+		end
+	elseif(dx>0) then
+		mob.x=x
+		mob.ox=8
+		mob.flip =false
+		if detect_collision(mob.x,mob.y,walls) then
+			mobs[1].collide=true
+		end
+	elseif(dx<0) then
+		mob.x=x
+		mob.ox=-8
+		mob.flip=true
+		if detect_collision(mob.x,mob.y,walls) then
+			mob.collide=true
+		end
+	end
+end
 -->8
 -- menu
 
@@ -619,6 +633,21 @@ function init_enemies()
 		collide=false
 	})
 end
+
+function update_enemies()
+	update_enemy_pos()
+end
+
+function update_enemy_pos()
+	for mob in all(mobs) do
+		if mob != player then
+			local x,y = getcloser(mob.x,mob.y, player.x,player.y)
+			update_mob_pos(mob, x, y)
+		end
+	end
+end
+
+
 -->8
 --map gen
 -->8
