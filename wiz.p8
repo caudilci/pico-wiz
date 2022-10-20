@@ -23,6 +23,7 @@ function _init()
 	init_player()
 	init_cast()
 	init_enemies()
+	init_menu()
 end
 
 function _update()
@@ -47,14 +48,13 @@ function _draw()
 	map(0)
 	print(gamestate,8)
 	draw_all_mobs()
-	draw_hp()
+	draw_hp(0,0,0,6,6,true)
 	draw_selected_spell()
 	draw_debug()
 	if gamestate == "turn" then
 		ani_complete = do_animations(tframe)
 	elseif gamestate == "menu" then
 		draw_menu()
-		draw_spell_description()
 	elseif gamestate=="cast" then
 		draw_cast()
 	end
@@ -69,16 +69,19 @@ function set_state(state)
 		gamestate = state
 		tframe=frame
 	elseif state == "menu" then
+		menu_index = player.spell_index
 		gamestate = state
 	elseif state == "cast" then
 		gamestate = state
 	end
 end
 
-function draw_hp()
-	rectfill(0,0, 29,8,0)
-	rect(0,0,29,8,6)
-	print("♥"..mobs[1].hp.."/"..mobs[1].maxhp, 1,2)
+function draw_hp(x,y,cb,co,ct,withoutline)
+	if withoutline then
+		rectfill(x,y, x+get_hp_draw_offset()+29,y+8,cb)
+		rect(x,y,x+get_hp_draw_offset()+29,y+8,co)
+	end
+	print("♥"..mobs[1].hp.."/"..mobs[1].maxhp, x+1,y+2,ct)
 end
 
 function draw_selected_spell()
@@ -142,11 +145,11 @@ function collect_item(x,y)
 			player.maxhp+=25
 			player.hp+=25
 		elseif item == 49 then
-			player.items.sp += 1
+			player.items[1] += 1
 		elseif item == 50 then
-			player.items.hp += 1
+			player.items[2] += 1
 		elseif item == 51 then
-			player.items.mp += 1
+			player.items[3] += 1
 		end
 	end
 end
@@ -155,6 +158,17 @@ end
 
 -->8
 -- helper functions
+
+function get_hp_draw_offset()
+	if player.maxhp >= 100 then
+		if player.hp >= 100 then
+			return 8
+		else
+			return 4
+		end
+	end
+	return 0
+end
 
 function get_frame(sframe,sprites,speed)
  return	sprites[flr(sframe/speed)%#sprites+1]
@@ -364,24 +378,59 @@ end
 -->8
 -- menu
 
+function init_menu()
+	menu_focus_items = false
+	menu_index = 1
+end
+
 function update_menu()
-	if(btnp(3))then
-		if player.spell_index == #player.spells then
-		 player.spell_index=1
-		else
-			player.spell_index+=1
+	if btnp(3) then
+
+		if not menu_focus_items then
+			if menu_index == #player.spells then
+				menu_index=1
+			else
+				menu_index+=1
+			end
 		end
-	elseif(btnp(2))then
-		if player.spell_index == 1 then
-			local max_i = #player.spells
-		 player.spell_index=max_i
-		else
-			player.spell_index-=1
+		
+	elseif btnp(2)then
+		if not menu_focus_items then
+			if menu_index == 1 then
+				menu_index = #player.spells
+			else
+				menu_index-=1
+			end
 		end
-	elseif(btnp(4))then
-		set_state("standby")
-	elseif(btnp(5))then
+	elseif btnp(0) then
+		if menu_focus_items then
+			if menu_index==1 then
+				menu_index=3
+			else
+				menu_index-=1
+			end
+		end
+	elseif btnp(1) then
+		if menu_focus_items then
+			if menu_index==3 then
+				menu_index=1
+			else
+				menu_index+=1
+			end
+		end
+	elseif btnp(5) then
+		if menu_focus_items then
+			menu_focus_items=false
+			menu_index=player.spell_index
+		else
+			menu_focus_items = true
+			menu_index = 1
+		end
+	elseif btnp(4) then
 		--select spell then standby
+		if not menu_focus_items then
+			player.spell_index = menu_index
+		end
 		set_state("standby")
 	end
 end
@@ -390,32 +439,58 @@ end
 -- colors, and text colors
 -- maybe location/size
 function draw_menu()
-	rect(2,4,64,124,12)
-	rectfill(3,5,63,123,1)
+	draw_spell_menu()
+	draw_spell_description()
+	draw_item_menu()
+end
+
+function draw_spell_menu()
+	rect(2,13,64,125,12)
+	rectfill(3,14,63,124,1)
 	for i=1, count(player.spells) do
-		if i==player.spell_index and frame%30<20 then
-			rectfill(3,5+7*(i-1),63,5+6+7*(i-1),13)
+		if not menu_focus_items and i==menu_index and frame%30<20 then
+			rectfill(3,14+7*(i-1),63,14+6+7*(i-1),13)
+		else
+			rectfill(3,14+7*(player.spell_index-1),63,14+6+7*(player.spell_index-1),13)
 		end
-	 print(player.spells[i].name,4,6+7*(i-1),7)
-	 if player.spells[i].uses<10 then
-	 	if player.spells[i].maxuses<10 then
-	 		print(player.spells[i].uses.."/"..player.spells[i].maxuses,52,6+7*(i-1),7)
-	 	else
-	 		print(player.spells[i].uses.."/"..player.spells[i].maxuses,48,6+7*(i-1),7)
-	 	end
-	 else
-	 	print(player.spells[i].uses.."/"..player.spells[i].maxuses,44,6+7*(i-1),7)
-	 end
+		print(player.spells[i].name,4,15+7*(i-1),7)
+		if player.spells[i].uses<10 then
+			if player.spells[i].maxuses<10 then
+				print(player.spells[i].uses.."/"..player.spells[i].maxuses,52,15+7*(i-1),7)
+			else
+				print(player.spells[i].uses.."/"..player.spells[i].maxuses,48,15+7*(i-1),7)
+			end
+		else
+			print(player.spells[i].uses.."/"..player.spells[i].maxuses,44,15+7*(i-1),7)
+		end
+	end
+end
+
+function draw_item_menu()
+	rect(2,2,125,13,12)
+	rectfill(3,3,124,12,1)
+	draw_hp(3,3,0,0,7,false)
+	for i=2, #item_sprites do
+		if menu_focus_items and i-1==menu_index and frame%30<20 then
+			rectfill(25+get_hp_draw_offset()+18*(i-1),3,43+get_hp_draw_offset()+18*(i-1),12,13)
+		end
+		spr(item_sprites[i],32+get_hp_draw_offset()+18*(i-1),4)
+		print(player.items[i-1], 27+get_hp_draw_offset()+18*(i-1),5,7)
 	end
 end
 
 function draw_spell_description()
-	rect(64,4,126,124,12)
-	rectfill(65,5,125,123,1)
-	local spell = player.spells[player.spell_index]
-	sspr(spell.icon.x,spell.icon.y,8,8,66,6,16,16)
-	print(spell.name, 88, 10, 7)
-	print(spell.description, 66,26,7)
+	rect(64,13,125,125,12)
+	rectfill(65,14,124,124,1)
+	local spell = {}
+	if menu_focus_items then
+		spell = player.spells[player.spell_index]
+	else
+		spell = player.spells[menu_index]
+	end
+	sspr(spell.icon.x,spell.icon.y,8,8,66,15,16,16)
+	print(spell.name, 88, 19, 7)
+	print(spell.description, 66,35,7)
 end
 -->8
 -- cast
@@ -442,12 +517,12 @@ function update_cast()
 			target = get_cone_points(player.x,player.y,targetp.x,targetp.y,player.spells[player.spell_index].radius, player.spells[player.spell_index].range)
 			end
 	end
-	if(btnp(4))then
+	if(btnp(5))then
 		reset_range()
 		reset_target()
 		set_state("standby")
 		
-	elseif(btnp(5))then
+	elseif(btnp(4))then
 		add(ani_queue, {player.spells[player.spell_index].ani, target})
 		--select spell then standby
 		reset_range()
@@ -542,7 +617,7 @@ function init_player()
 		spell_index=1,
 		spells={},
 		-- {item=spriteNum, ammt=num}
-		items={sp=0,hp=1,mp=1},
+		items={0,1,1},
 		collide=false
 	}
 	add(player.spells,spellbook[1])
@@ -983,7 +1058,7 @@ __map__
 0102010202020201010202020201020102020202020202020202020202020202020202020202020200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0102020202020202020201020202020102020202020202020202020202020202020202020202020200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0102020202020202020201020202020102020202020202020202020202020202020202020202020200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0102020202010201010202020201020102020202020202020202020202020202020202020202020200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0102020202010201010230020201020102020202020202020202020202020202020202020202020200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0102020202020201010230020202020102020202020202020202020202020202020202020202020200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0101010202010101010102020101010102020202020202020202020202020202020202020202020200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0101010202010101010102020101010102020202020202020202020202020202020202020202020200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
