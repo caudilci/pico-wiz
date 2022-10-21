@@ -51,6 +51,7 @@ function _draw()
 	print(gamestate,8)
 	draw_items()
 	draw_all_mobs()
+	draw_enemy_health()
 	draw_hp(0,0,0,6,6,true)
 	draw_selected_spell()
 	draw_debug()
@@ -197,11 +198,14 @@ function get_frame(sframe,sprites,speed)
  return	sprites[flr(sframe/speed)%#sprites+1]
 end
 
-function detect_collision(x,y,flags)
-	sprite = mget(x,y)
-	for flag in all(flags) do
-		if fget(sprite,flag) then
+function detect_collision(mob)
+	sprite = mget(mob.x,mob.y)
+	if fget(sprite,0) then
 			return true
+	end
+	for m in all(mobs) do
+		if m!=mob and mob.x == m.x and mob.y==m.y then
+			return m
 		end
 	end
 	return false
@@ -548,6 +552,7 @@ function update_cast()
 		
 	elseif(btnp(4))then
 		add(ani_queue, {player.spells[player.spell_index].ani, target})
+		dmg(player.spells[player.spell_index].dmg)
 		--select spell then standby
 		reset_range()
 		reset_target()
@@ -599,7 +604,7 @@ function highlight_target()
 			mset(point.x,point.y,6)
 		end
 	end
-	if frame%30<20 then
+	if frame%30<15 then
 		mset(targetp.x, targetp.y, 7)
 	else
 		mset(targetp.x, targetp.y, 5)
@@ -624,6 +629,13 @@ function reset_range()
 	end
 end
 
+function dmg(damage, targets)
+	for mob in all(mobs) do
+		if mob != player then
+			mob.hp -= damage
+		end
+	end
+end
 
 
 -->8
@@ -694,14 +706,19 @@ function update_mob_pos(mob, x,y)
 		mob.ox=-8
 		mob.flip=true
 	end
-	if detect_collision(mob.x,mob.y,walls) then
+	local collide = detect_collision(mob)
+	if collide then
 		mob.collide=true
+		if collide == player then
+			-- substitute mob.meleedmg later
+			player.hp -= 10
+		end
 	end
 end
 
 function move_mob(mob)
 	if (mob.collide
-	and detect_collision(mob.x,mob.y,walls)) then
+	and detect_collision(mob)) then
 		if abs(mob.ox) == 4 then
 		 local sign = sgn(mob.ox)
 			mob.x += (1*sign)
@@ -753,18 +770,30 @@ function init_enemies()
 end
 
 function update_enemies()
-	update_enemy_pos()
-end
-
-function update_enemy_pos()
 	for mob in all(mobs) do
-		if mob != player then
-			local x,y = getcloser(mob.x,mob.y, player.x,player.y)
-			update_mob_pos(mob, x, y)
+		if mob.hp <= 0 then
+			del(mobs,mob)
+		else
+			update_enemy_pos(mob)
 		end
 	end
 end
 
+function update_enemy_pos(mob)
+	if mob != player then
+		local x,y = getcloser(mob.x,mob.y, player.x,player.y)
+		update_mob_pos(mob, x, y)
+	end
+end
+
+function draw_enemy_health()
+	for mob in all(mobs) do
+		if mob != player then
+			spr(176,mob.x*8+mob.ox,mob.y*8+1+mob.oy)
+			line(mob.x*8+1+mob.ox,mob.y*8+7+mob.oy, mob.x*8+(mob.hp/mob.maxhp)*6+mob.ox, mob.y*8+7+mob.oy)
+		end
+	end
+end
 
 -->8
 --map gen
@@ -784,6 +813,7 @@ function init_spellbook()
 				radius=0.5,
 				mtype="heal",
 				range=4,
+				dmg=0
 			},
 			--different heal levels that cause enemy status effects
 			--different shield levels
@@ -797,7 +827,8 @@ function init_spellbook()
 				spelltype= spelltypes[2],
 				ani={160,161,162,163},
 				range=6,
-				radius=1
+				radius=1,
+				dmg=8
 			},
 			{
 				name="fire fan",
@@ -811,6 +842,7 @@ function init_spellbook()
 				radius=30,
 				mtype="heal",
 				range=4,
+				dmg=5
 			},
 		}
 end
@@ -908,9 +940,9 @@ aaa00a00777767770a00a0a00b0000b0800080800000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+06666660000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+60000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+06666660000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00800800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00888800008008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 02a8a820008888000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
