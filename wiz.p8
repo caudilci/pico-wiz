@@ -35,6 +35,7 @@ function _update()
 		update_player()
 	elseif gamestate== "turn" then
 		move_complete = move_all_mobs()
+		tframe+=1
 		if move_complete and ani_complete then
 			set_state("standby")
 		end
@@ -48,7 +49,7 @@ end
 
 function _draw()
 	map(0)
-	print(gamestate,8)
+	print(gamestate,1,15,8)
 	draw_items()
 	draw_all_mobs()
 	draw_enemy_health()
@@ -56,7 +57,7 @@ function _draw()
 	draw_selected_spell()
 	draw_debug()
 	if gamestate == "turn" then
-		ani_complete = do_animations(tframe)
+		ani_complete = animations(tframe)
 	elseif gamestate == "menu" then
 		draw_menu()
 	elseif gamestate=="cast" then
@@ -71,7 +72,7 @@ function set_state(state)
 	elseif state == "turn" then
 		update_enemies()
 		gamestate = state
-		tframe=frame
+		tframe=1
 	elseif state == "menu" then
 		menu_index = player.spell_index
 		gamestate = state
@@ -103,13 +104,13 @@ function draw_debug()
 	end
 end
 
-function do_animations(sframe)
+function animations(tframe)
 	local unfinished = false
-	if sframe < 0 then
+	if tframe < 0 then
 		return true
 	end
 	for pair in all(ani_queue) do
-		local sprite = get_frame(frame-sframe,pair[1],2)
+		local sprite = get_frame(tframe-1,pair[1],2)
 		for point in all(pair[2]) do
 			spr(sprite,point.x*8,point.y*8,1,1)
 		end	
@@ -211,8 +212,26 @@ function detect_collision(mob)
 	return false
 end
 
---todo:
---  implement array includes func
+function detect_collision(x,y)
+	sprite = mget(x,y)
+	if fget(sprite,0) then
+			return true
+	end
+	for m in all(mobs) do
+		if x == m.x and y==m.y then
+			return m
+		end
+	end
+	return false
+end
+
+function shallowcopy(t)
+	local t2 = {}
+	for k,v in pairs(t) do
+	  t2[k] = v
+	end
+	return t2
+  end
 
 function fov(x,y,r)
 	local dx,dy
@@ -552,7 +571,7 @@ function update_cast()
 		
 	elseif(btnp(4))then
 		add(ani_queue, {player.spells[player.spell_index].ani, target})
-		dmg(player.spells[player.spell_index].dmg)
+		dmg(player.spells[player.spell_index].dmg, target)
 		--select spell then standby
 		reset_range()
 		reset_target()
@@ -631,7 +650,7 @@ end
 
 function dmg(damage, targets)
 	for mob in all(mobs) do
-		if mob != player then
+		if mob != player and includes_point(targets,{x=mob.x,y=mob.y})  then
 			mob.hp -= damage
 		end
 	end
@@ -646,6 +665,7 @@ function init_player()
 		y=8,
 		ox=0,
 		oy=0,
+		dir=1,
 		sprites={240, 241},
 		flipx=false,
 		hp = 50,
@@ -689,62 +709,74 @@ function update_player()
 end
 
 function update_mob_pos(mob, x,y)
+	local collide = detect_collision(x,y)
 	local dx,dy = mob.x-x,mob.y-y
 	
 	if(dy>0) then
-		mob.y=y
-		mob.oy=8
-	elseif(dy<0) then
-		mob.y=y
-		mob.oy=-8
-	elseif(dx>0) then
-		mob.x=x
-		mob.ox=8
-		mob.flip =false
-	elseif(dx<0) then
-		mob.x=x
-		mob.ox=-8
-		mob.flip=true
-	end
-	local collide = detect_collision(mob)
-	if collide then
-		mob.collide=true
-		if collide == player then
-			-- substitute mob.meleedmg later
-			player.hp -= 10
+		if not collide then
+			mob.y=y
+			mob.oy=8
+		else
+			mob.collide=true
 		end
+		mob.dir=3
+	elseif(dy<0) then
+		if not collide then
+			mob.y=y
+			mob.oy=-8
+		else
+			mob.collide=true
+		end
+		mob.dir=4
+	elseif(dx>0) then
+		if not collide then
+			mob.x=x
+			mob.ox=8
+		else
+			mob.collide=true
+		end
+		mob.flip =false
+		mob.dir=1
+	elseif(dx<0) then
+		if not collide then
+			mob.x=x
+			mob.ox=-8
+		else
+			mob.collide=true
+		end
+		mob.flip =false
+		mob.dir=2
+	end
+	if mob != player and collide==player then
+		player.hp -= mob.meleedmg
 	end
 end
 
 function move_mob(mob)
-	if (mob.collide
-	and detect_collision(mob)) then
-		if abs(mob.ox) == 4 then
-		 local sign = sgn(mob.ox)
-			mob.x += (1*sign)
-			mob.ox *= -1
+	if mob.collide then
+		if tframe <= 4 then
+			mob.ox+=dirx[mob.dir]
+			mob.oy+=diry[mob.dir]
+		else
+			mob.collide=false
 		end
-		if abs(mob.oy) == 4 then
-			local sign = sgn(mob.oy)
-			mob.y += (1*sign)
-			mob.oy *= -1
-		end
-	end
-	if mob.ox < 0 then
-		mob.ox += 1
-	elseif mob.ox > 0 then
-	mob.ox -= 1
-	end
-	if mob.oy < 0 then
-		mob.oy += 1
-	elseif mob.oy > 0 then
-	mob.oy -= 1
-	end
-	if mob.ox == 0 
-	and mob.oy == 0 then
-		return true
 	else
-		return false
+		if mob.ox < 0 then
+			mob.ox += 1
+		elseif mob.ox > 0 then
+		mob.ox -= 1
+		end
+		if mob.oy < 0 then
+			mob.oy += 1
+		elseif mob.oy > 0 then
+		mob.oy -= 1
+		end
+		if mob.ox == 0 
+		and mob.oy == 0 then
+			return true
+		else
+			return false
+		end
 	end
 end
 
@@ -754,19 +786,42 @@ function draw_mob(mob)
 end
 
 function init_enemies()
-	add(mobs, {
-		x=12,
-		y=12,
-		ox=0,
-		oy=0,
-		sprites={192, 193},
-		flipx=false,
-		hp = 50,
-		maxhp = 50,
-		spell_index=1,
-		spells={},
-		collide=false
-	})
+	enemyid=1
+	enemy_types = {
+		{
+			id=-1,
+			x=12,
+			y=12,
+			dir=1,
+			ox=0,
+			oy=0,
+			sprites={192, 193},
+			flipx=false,
+			hp = 10,
+			maxhp = 10,
+			spell_index=1,
+			meleedmg=2,
+			spells={},
+			collide=false
+		}
+	}
+	add_enemy(11,11,1)
+	add_enemy(11,12,1)
+	add_enemy(11,13,1)
+	add_enemy(12,11,1)
+	add_enemy(12,12,1)
+	add_enemy(12,13,1)
+end
+
+function add_enemy(x,y,type)
+	local id = enemyid + 1
+	local baseenemy = enemy_types[type]
+	local enemy = shallowcopy(baseenemy)
+	enemy.id=id
+	enemy.x=x
+	enemy.y=y
+	add(mobs,enemy)
+	enemyid=id
 end
 
 function update_enemies()
