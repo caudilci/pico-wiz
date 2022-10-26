@@ -449,7 +449,7 @@ function update_menu()
 		end
 	elseif btnp(0) then
 		if menu_focus_items then
-			if menu_index==1 then
+			if menu_index==2 then
 				menu_index=3
 			else
 				menu_index-=1
@@ -458,7 +458,7 @@ function update_menu()
 	elseif btnp(1) then
 		if menu_focus_items then
 			if menu_index==3 then
-				menu_index=1
+				menu_index=2
 			else
 				menu_index+=1
 			end
@@ -469,7 +469,7 @@ function update_menu()
 			menu_index=player.spell_index
 		else
 			menu_focus_items = true
-			menu_index = 1
+			menu_index = 2
 		end
 	elseif btnp(4) then
 		--select spell then standby
@@ -495,9 +495,10 @@ function draw_spell_menu()
 	rect(2,13,64,125,12)
 	rectfill(3,14,63,124,1)
 	for i=1, count(player.spells) do
+		-- highlight spell looked at
 		if i==menu_index and frame%30>15 and not menu_focus_items then
 			rectfill(3,14+7*(i-1),63,14+6+7*(i-1),13)
-		else
+		elseif i==player.spell_index then
 			rectfill(3,14+7*(player.spell_index-1),63,14+6+7*(player.spell_index-1),13)
 		end
 		print(player.spells[i].name,4,15+7*(i-1),7)
@@ -517,13 +518,15 @@ function draw_item_menu()
 	rect(2,2,125,13,12)
 	rectfill(3,3,124,12,1)
 	draw_hp(3,3,0,0,7,false)
-	for i=2, #item_sprites do
+	for i=3, #item_sprites do
 		if menu_focus_items and i-1==menu_index and frame%30<15 then
-			rectfill(25+get_hp_draw_offset()+18*(i-1),3,43+get_hp_draw_offset()+18*(i-1),12,13)
+			rectfill(27+get_hp_draw_offset()+18*(i-2),3,43+get_hp_draw_offset()+18*(i-2),12,13)
 		end
-		spr(item_sprites[i],32+get_hp_draw_offset()+18*(i-1),4)
-		print(player.items[i-1], 27+get_hp_draw_offset()+18*(i-1),5,7)
+		spr(item_sprites[i],34+get_hp_draw_offset()+18*(i-2),4)
+		print(player.items[i-1], 29+get_hp_draw_offset()+18*(i-2),5,7)
 	end
+	spr(item_sprites[2],116,4)
+	print(player.items[1], 111,5,7)
 end
 
 function draw_spell_description()
@@ -716,7 +719,7 @@ function update_mob_pos(mob, x,y)
 		if not collide then
 			mob.y=y
 			mob.oy=8
-		else
+		elseif mob==player then
 			mob.collide=true
 		end
 		mob.dir=3
@@ -724,7 +727,7 @@ function update_mob_pos(mob, x,y)
 		if not collide then
 			mob.y=y
 			mob.oy=-8
-		else
+		elseif mob==player then
 			mob.collide=true
 		end
 		mob.dir=4
@@ -732,7 +735,7 @@ function update_mob_pos(mob, x,y)
 		if not collide then
 			mob.x=x
 			mob.ox=8
-		else
+		elseif mob==player then
 			mob.collide=true
 		end
 		mob.flip =false
@@ -741,7 +744,7 @@ function update_mob_pos(mob, x,y)
 		if not collide then
 			mob.x=x
 			mob.ox=-8
-		else
+		elseif mob==player then
 			mob.collide=true
 		end
 		mob.flip =false
@@ -749,17 +752,14 @@ function update_mob_pos(mob, x,y)
 	end
 	if mob != player and collide==player then
 		player.hp -= mob.meleedmg
+		mob.collide=true
 	end
 end
 
 function move_mob(mob)
-	if mob.collide then
-		if tframe <= 4 then
-			mob.ox+=dirx[mob.dir]
-			mob.oy+=diry[mob.dir]
-		else
-			mob.collide=false
-		end
+	if mob.collide and tframe <= 4 then
+		mob.ox+=dirx[mob.dir]
+		mob.oy+=diry[mob.dir]
 	else
 		if mob.ox < 0 then
 			mob.ox += 1
@@ -773,6 +773,7 @@ function move_mob(mob)
 		end
 		if mob.ox == 0 
 		and mob.oy == 0 then
+			mob.collide=false
 			return true
 		else
 			return false
@@ -844,8 +845,13 @@ end
 function draw_enemy_health()
 	for mob in all(mobs) do
 		if mob != player then
-			spr(176,mob.x*8+mob.ox,mob.y*8+1+mob.oy)
-			line(mob.x*8+1+mob.ox,mob.y*8+7+mob.oy, mob.x*8+(mob.hp/mob.maxhp)*6+mob.ox, mob.y*8+7+mob.oy)
+			if mob.collide then
+				spr(176,mob.x*8,mob.y*8+1)
+				line(mob.x*8+1,mob.y*8+7, mob.x*8+(mob.hp/mob.maxhp)*6, mob.y*8+7)
+			else
+				spr(176,mob.x*8+mob.ox,mob.y*8+1+mob.oy)
+				line(mob.x*8+1+mob.ox,mob.y*8+7+mob.oy, mob.x*8+(mob.hp/mob.maxhp)*6+mob.ox, mob.y*8+7+mob.oy)
+			end
 		end
 	end
 end
