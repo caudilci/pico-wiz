@@ -6,10 +6,25 @@ This is the first game I plan on completing in the pico-8 engine, with the end g
 
 
 ### TODO
-- stop enemy healthbar from moving on collision
-- stop enemy from showing collision with other enemies
-- fix menu highlighting
-- enemy spells
-- spell unlocking/upgrading
-- world gen
-- polish
+-[x] stop enemy healthbar from moving on collision
+-[x] stop enemy from showing collision with other enemies
+-[ ] switch menu to utilize vertical and horizontal indices --> required for spell upgrading
+-[ ] spell unlocking/upgrading
+-[ ] enemy spells
+-[ ] make player able to hurt themself?
+-[ ] world gen
+-[ ] title screen and pre-game-start options
+-[ ] adjust spell menu highlighting?
+-[ ] center usable items in menu
+-[ ] polish
+
+### Stretch Goals
+-[ ] mob typing --> rock>fire fire>wood etc
+-[ ] status effects --> health bar denotes status effect for enemies, not sure about player
+    - poison
+    - frenzy
+    - burn
+    - teleportitis
+-[ ] summons/allied mobs
+-[ ] enough spells to scroll menu
+-[ ] final boss?
