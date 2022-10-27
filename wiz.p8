@@ -74,7 +74,7 @@ function set_state(state)
 		gamestate = state
 		tframe=1
 	elseif state == "menu" then
-		menu_index = player.spell_index
+		vmenu_index = player.spell_index+1
 		gamestate = state
 	elseif state == "cast" then
 		gamestate = state
@@ -424,59 +424,53 @@ end
 -- menu
 
 function init_menu()
-	menu_focus_items = false
-	menu_index = 1
+	vmenu_index = 1
+	hmenu_index = 1
 end
 
 function update_menu()
 	if btnp(3) then
-
-		if not menu_focus_items then
-			if menu_index == #player.spells then
-				menu_index=1
-			else
-				menu_index+=1
-			end
+		if vmenu_index == #spellbook+1 then
+			vmenu_index=1
+			hmenu_index=2
+		elseif vmenu_index==1 then
+			hmenu_index=1
+			vmenu_index+=1
+		else
+			vmenu_index+=1
 		end
 		
 	elseif btnp(2)then
-		if not menu_focus_items then
-			if menu_index == 1 then
-				menu_index = #player.spells
-			else
-				menu_index-=1
-			end
+		if vmenu_index == 1 then
+			vmenu_index = #spellbook+1
+			hmenu_index=1
+		else
+			vmenu_index-=1
+		end
+		if vmenu_index == 1 then
+			hmenu_index=2
 		end
 	elseif btnp(0) then
-		if menu_focus_items then
-			if menu_index==2 then
-				menu_index=3
-			else
-				menu_index-=1
-			end
+		if hmenu_index==2 then
+			hmenu_index=3
+		else
+			hmenu_index-=1
 		end
 	elseif btnp(1) then
-		if menu_focus_items then
-			if menu_index==3 then
-				menu_index=2
-			else
-				menu_index+=1
-			end
+		if hmenu_index==3 then
+			hmenu_index=2
+		else
+			hmenu_index+=1
 		end
 	elseif btnp(5) then
-		if menu_focus_items then
-			menu_focus_items=false
-			menu_index=player.spell_index
-		else
-			menu_focus_items = true
-			menu_index = 2
-		end
+		vmenu_index=player.spells+1
+		hmenu_index=1
 	elseif btnp(4) then
 		--select spell then standby
-		if not menu_focus_items then
-			player.spell_index = menu_index
-		else 
-			use_item(menu_index)
+		if hmenu_index==1 and vmenu_index>1 and vmenu_index<=#player.spells+1 then
+			player.spell_index = vmenu_index-1
+		elseif vmenu_index==1 then
+			use_item(hmenu_index)
 		end
 		set_state("standby")
 	end
@@ -494,22 +488,34 @@ end
 function draw_spell_menu()
 	rect(2,13,64,125,12)
 	rectfill(3,14,63,124,1)
-	for i=1, count(player.spells) do
+	for i=1, count(spellbook) do
 		-- highlight spell looked at
-		if i==menu_index and frame%30>15 and not menu_focus_items then
+		if i==vmenu_index-1 and frame%30>15 and vmenu_index!=1 then
 			rectfill(3,14+7*(i-1),63,14+6+7*(i-1),13)
 		elseif i==player.spell_index then
 			rectfill(3,14+7*(player.spell_index-1),63,14+6+7*(player.spell_index-1),13)
 		end
-		print(player.spells[i].name,4,15+7*(i-1),7)
-		if player.spells[i].uses<10 then
-			if player.spells[i].maxuses<10 then
-				print(player.spells[i].uses.."/"..player.spells[i].maxuses,52,15+7*(i-1),7)
+		if i<=#player.spells then
+			print(spellbook[i].name,4,15+7*(i-1),7)
+		else
+			print(spellbook[i].name,4,15+7*(i-1),5)
+		end
+		if i<=#player.spells then
+			if player.spells[i].uses<10 then
+				if player.spells[i].maxuses<10 then
+					print(player.spells[i].uses.."/"..player.spells[i].maxuses,52,15+7*(i-1),7)
+				else
+					print(player.spells[i].uses.."/"..player.spells[i].maxuses,48,15+7*(i-1),7)
+				end
 			else
-				print(player.spells[i].uses.."/"..player.spells[i].maxuses,48,15+7*(i-1),7)
+				print(player.spells[i].uses.."/"..player.spells[i].maxuses,44,15+7*(i-1),7)
 			end
 		else
-			print(player.spells[i].uses.."/"..player.spells[i].maxuses,44,15+7*(i-1),7)
+			if spellbook[i].maxuses<10 then
+				print(spellbook[i].maxuses,60,15+7*(i-1),5)
+			else
+				print(spellbook[i].maxuses,56,15+7*(i-1),5)
+			end
 		end
 	end
 end
@@ -519,7 +525,7 @@ function draw_item_menu()
 	rectfill(3,3,124,12,1)
 	draw_hp(3,3,0,0,7,false)
 	for i=3, #item_sprites do
-		if menu_focus_items and i-1==menu_index and frame%30<15 then
+		if vmenu_index==1 and i-1==hmenu_index and frame%30<15 then
 			rectfill(27+get_hp_draw_offset()+18*(i-2),3,43+get_hp_draw_offset()+18*(i-2),12,13)
 		end
 		spr(item_sprites[i],34+get_hp_draw_offset()+18*(i-2),4)
@@ -533,10 +539,12 @@ function draw_spell_description()
 	rect(64,13,125,125,12)
 	rectfill(65,14,124,124,1)
 	local spell = {}
-	if menu_focus_items then
+	if vmenu_index==1 then
 		spell = player.spells[player.spell_index]
+	elseif vmenu_index<=#player.spells then
+		spell = player.spells[vmenu_index-1]
 	else
-		spell = player.spells[menu_index]
+		spell = spellbook[vmenu_index-1]
 	end
 	sspr(spell.icon.x,spell.icon.y,8,8,66,15,16,16)
 	print(spell.name, 88, 19, 7)
@@ -905,6 +913,19 @@ function init_spellbook()
 				range=4,
 				dmg=5
 			},
+			{
+				name="fire ball",
+				maxuses=9,
+				uses=9,
+				description="fire but ball",
+				icon={x=40,y=64},
+				ani={160,161,162,163},
+				spelltype = spelltypes[1],
+				radius=30,
+				mtype="heal",
+				range=3,
+				dmg=5
+			},
 		}
 end
 __gfx__
@@ -972,14 +993,14 @@ __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0a000a000777777000aaaa0000bbbb00080800080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-aaa00a00777767770a00a0a00b0000b0800080800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0a00aaa077766770a00aaa0ab000000b880880880000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-000aaaaa077aa000a000a00ab000000b898888980000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000aaa0000aa000a00a000ab000000ba889988a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00a00a000000aa00a0aaa00ab000000b0a8888a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0aaa0a0000000a000a0a00a00b0000b000a88a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00a0000000000a0000aaaa0000bbbb00000aa0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0a000a000777777000aaaa0000bbbb00080800080008800000000000000000000000000000000000000000000000000000000000000000000000000000000000
+aaa00a00777767770a00a0a00b0000b0800080800088880000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0a00aaa077766770a00aaa0ab000000b880880880088980000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000aaaaa077aa000a000a00ab000000b898888980889988000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000aaa0000aa000a00a000ab000000ba889988a889a998000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00a00a000000aa00a0aaa00ab000000b0a8888a0899aa98800000000000000000000000000000000000000000000000000000000000000000000000000000000
+0aaa0a0000000a000a0a00a00b0000b000a88a0089a9a99800000000000000000000000000000000000000000000000000000000000000000000000000000000
+00a0000000000a0000aaaa0000bbbb00000aa00008a77a8000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
