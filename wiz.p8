@@ -9,7 +9,7 @@ function _init()
 	walls = {0}
 	item_sprites = {48,49,50,51}
 	items = {}
-	add(items,{x=4,y=4,id=1})
+	add(items,{x=4,y=4,id=2})
 	
 	dirx={-1,1,0,0,1,1,-1,-1}
 	diry={0,0,-1,1,-1,1,1,-1}
@@ -49,7 +49,7 @@ end
 
 function _draw()
 	map(0)
-	print(gamestate,1,15,8)
+	-- print(gamestate,1,15,8)
 	draw_items()
 	draw_all_mobs()
 	draw_enemy_health()
@@ -74,7 +74,7 @@ function set_state(state)
 		gamestate = state
 		tframe=1
 	elseif state == "menu" then
-		vmenu_index = player.spell_index+1
+		spell_menu_index = player.spell_index+1
 		gamestate = state
 	elseif state == "cast" then
 		gamestate = state
@@ -154,7 +154,7 @@ function collect_item(x,y)
 			player.maxhp+=25
 			player.hp+=25
 		else
-			player.items[item.id] += 1
+			player.items[item.id-1] += 1
 		end
 		del(items,item)
 	end
@@ -424,55 +424,87 @@ end
 -- menu
 
 function init_menu()
-	vmenu_index = 1
-	hmenu_index = 1
+	spell_menu_index = 1
+	upgrade_menu_index=1
+	item_menu_index=2
+	in_upgrade_menu = false
 end
 
 function update_menu()
 	if btnp(3) then
-		if vmenu_index == #spellbook+1 then
-			vmenu_index=1
-			hmenu_index=2
-		elseif vmenu_index==1 then
-			hmenu_index=1
-			vmenu_index+=1
+		if not in_upgrade_menu then
+			if spell_menu_index == #spellbook+1 then
+				spell_menu_index=1
+				item_menu_index=2
+			elseif spell_menu_index==1 then
+				item_menu_index=1
+				spell_menu_index+=1
+			else
+				spell_menu_index+=1
+			end
 		else
-			vmenu_index+=1
+			local upgrades = player.spells[spell_menu_index-1].upgrades
+			if upgrade_menu_index == #upgrades then
+				upgrade_menu_index = 1
+			else
+				upgrade_menu_index+=1
+			end
 		end
 		
-	elseif btnp(2)then
-		if vmenu_index == 1 then
-			vmenu_index = #spellbook+1
-			hmenu_index=1
+	elseif btnp(2) then
+		if not in_upgrade_menu then
+			if spell_menu_index == 1 then
+				spell_menu_index = #spellbook+1
+				item_menu_index=2
+			elseif spell_menu_index == 2 then
+				spell_menu_index-=1
+				item_menu_index=2
+			else
+				spell_menu_index-=1
+			end
 		else
-			vmenu_index-=1
+			local upgrades = player.spells[spell_menu_index-1].upgrades
+			if upgrade_menu_index == 1 then
+				upgrade_menu_index = #upgrades
+			else
+				upgrade_menu_index-=1
+			end
 		end
-		if vmenu_index == 1 then
-			hmenu_index=2
-		end
+		
 	elseif btnp(0) then
-		if hmenu_index==2 then
-			hmenu_index=3
-		else
-			hmenu_index-=1
+		if spell_menu_index==1 then
+			if item_menu_index==2 then
+				item_menu_index=3
+			else
+				item_menu_index-=1
+			end
+		elseif spell_menu_index<=#player.spells+1 then
+			in_upgrade_menu = not in_upgrade_menu
 		end
 	elseif btnp(1) then
-		if hmenu_index==3 then
-			hmenu_index=2
-		else
-			hmenu_index+=1
+		if spell_menu_index==1 then
+			if item_menu_index==3 then
+				item_menu_index=2
+			else
+				item_menu_index+=1
+			end
+		elseif spell_menu_index<=#player.spells+1 then
+			in_upgrade_menu = not in_upgrade_menu
 		end
 	elseif btnp(5) then
-		vmenu_index=player.spells+1
-		hmenu_index=1
+		spell_menu_index=player.spell_index+1
+		item_menu_index=1
+		set_state("standby")
 	elseif btnp(4) then
 		--select spell then standby
-		if hmenu_index==1 and vmenu_index>1 and vmenu_index<=#player.spells+1 then
-			player.spell_index = vmenu_index-1
-		elseif vmenu_index==1 then
-			use_item(hmenu_index)
+		if item_menu_index==1 and spell_menu_index>1 and spell_menu_index<=#player.spells+1 then
+			player.spell_index = spell_menu_index-1
+		elseif spell_menu_index==1 then
+			use_item(item_menu_index)
+		elseif spell_menu_index>#player.spells and spellbook[spell_menu_index-1].spcost <= player.items[1] then
+			player.items[1]-= spellbook[spell_menu_index-1].spcost
+			add(player.spells, shallowcopy(spellbook[spell_menu_index-1]));
 		end
-		set_state("standby")
 	end
 end
 
@@ -483,6 +515,7 @@ function draw_menu()
 	draw_spell_menu()
 	draw_spell_description()
 	draw_item_menu()
+	draw_spell_upgrades()
 end
 
 function draw_spell_menu()
@@ -490,7 +523,7 @@ function draw_spell_menu()
 	rectfill(3,14,63,124,1)
 	for i=1, count(spellbook) do
 		-- highlight spell looked at
-		if i==vmenu_index-1 and frame%30>15 and vmenu_index!=1 then
+		if i==spell_menu_index-1 and frame%30>15 and spell_menu_index!=1 and not in_upgrade_menu then
 			rectfill(3,14+7*(i-1),63,14+6+7*(i-1),13)
 		elseif i==player.spell_index then
 			rectfill(3,14+7*(player.spell_index-1),63,14+6+7*(player.spell_index-1),13)
@@ -511,10 +544,10 @@ function draw_spell_menu()
 				print(player.spells[i].uses.."/"..player.spells[i].maxuses,44,15+7*(i-1),7)
 			end
 		else
-			if spellbook[i].maxuses<10 then
-				print(spellbook[i].maxuses,60,15+7*(i-1),5)
+			if spellbook[i].spcost<10 then
+				print(''..spellbook[i].spcost..'sp',52,15+7*(i-1),5)
 			else
-				print(spellbook[i].maxuses,56,15+7*(i-1),5)
+				print(''..spellbook[i].spcost..'sp',48,15+7*(i-1),5)
 			end
 		end
 	end
@@ -525,7 +558,7 @@ function draw_item_menu()
 	rectfill(3,3,124,12,1)
 	draw_hp(3,3,0,0,7,false)
 	for i=3, #item_sprites do
-		if vmenu_index==1 and i-1==hmenu_index and frame%30<15 then
+		if spell_menu_index==1 and i-1==item_menu_index and frame%30<15 then
 			rectfill(27+get_hp_draw_offset()+18*(i-2),3,43+get_hp_draw_offset()+18*(i-2),12,13)
 		end
 		spr(item_sprites[i],34+get_hp_draw_offset()+18*(i-2),4)
@@ -536,19 +569,59 @@ function draw_item_menu()
 end
 
 function draw_spell_description()
-	rect(64,13,125,125,12)
-	rectfill(65,14,124,124,1)
+	rect(64,13,125,75,12)
+	rectfill(65,14,124,74,1)
 	local spell = {}
-	if vmenu_index==1 then
+	if spell_menu_index==1 then
 		spell = player.spells[player.spell_index]
-	elseif vmenu_index<=#player.spells then
-		spell = player.spells[vmenu_index-1]
+	elseif spell_menu_index<=#player.spells then
+		spell = player.spells[spell_menu_index-1]
 	else
-		spell = spellbook[vmenu_index-1]
+		spell = spellbook[spell_menu_index-1]
 	end
 	sspr(spell.icon.x,spell.icon.y,8,8,66,15,16,16)
 	print(spell.name, 88, 19, 7)
-	print(spell.description, 66,35,7)
+	cursor(66,33)
+	print(spell.description,7)
+	print('')
+	print('uses: '..spell.uses..'/'..spell.maxuses, 7)
+	print('dmg: '..spell.dmg, 7)
+	print('range: '..spell.range,7)
+	if spell.spelltype == "ball" then
+		print('radius: '..spell.radius, 7)
+	elseif spell.spelltype == "bolt" then
+		
+	elseif spell.spelltype == "fan" then
+		-- angle isn't really relevent to player
+		print('spread: '..spell.angle,7)
+	end
+end
+
+function draw_spell_upgrades()
+	rect(64,75,125,125,12)
+	rectfill(65,76,124,124,1)
+	if spell_menu_index > 1 then
+		local spell_known = spell_menu_index <= #player.spells
+		print('upgrades:',66,77,7)
+		local upgrades
+		if spell_known then
+			upgrades = player.spells[spell_menu_index-1].upgrades
+		else
+			upgrades = spellbook[spell_menu_index-1].upgrades
+		end
+		for i=1, #upgrades do
+			if i==upgrade_menu_index and frame%30<15 and in_upgrade_menu then
+				rectfill(66,83+((i-1)*7),124,88+((i-1)*7),13)
+			end
+			if upgrades[i].owned then
+				print(upgrades[i].name,66,83+((i-1)*7),11)
+				print(upgrades[i].cost,121,83+((i-1)*7),11)
+			else
+				print(upgrades[i].name,66,83+((i-1)*7),7)
+				print(upgrades[i].cost,121,83+((i-1)*7),7)
+			end
+		end
+	end
 end
 -->8
 -- cast
@@ -572,8 +645,8 @@ function update_cast()
 		elseif player.spells[player.spell_index].spelltype == "bolt" then
 			target = line_points(player.x,player.y, targetp.x, targetp.y)
 		elseif player.spells[player.spell_index].spelltype == "fan" then
-			target = get_cone_points(player.x,player.y,targetp.x,targetp.y,player.spells[player.spell_index].radius, player.spells[player.spell_index].range)
-			end
+			target = get_cone_points(player.x,player.y,targetp.x,targetp.y,player.spells[player.spell_index].angle, player.spells[player.spell_index].range)
+		end
 	end
 	if(btnp(5))then
 		reset_range()
@@ -872,35 +945,50 @@ function init_spellbook()
 	spelltypes = {"ball", "bolt","fan"}
 	spellbook = {
 			{
-				name="heal",
+				name="sparks",
+				spcost=1,
 				maxuses=15,
 				uses=15,
-				description="heals 1 ally",
+				description="sparks fizzle from your staff",
 				icon={x=0,y=64},
 				ani={160,161,162,163},
 				spelltype = spelltypes[1],
 				radius=0.5,
 				mtype="heal",
 				range=4,
-				dmg=0
+				dmg=0,
+				cooldown=3,
+				upgrades={
+					{name="damage",owned=false,cost=1, mod=3},
+					{name="range",owned=false,cost=1,mod=1},
+					{name="uses",owned=false,cost=1, mod=4},
+				},
+				additional_effect = function () end
 			},
 			--different heal levels that cause enemy status effects
 			--different shield levels
 			--direct damage spells
 			{
 				name="holy bolt",
+				spcost=1,
 				maxuses=30,
 				uses=3,
 				icon={x=8,y=64},
 				description="deals 8 dmg",
 				spelltype= spelltypes[2],
-				ani={160,161,162,163},
+				ani={144,145,146,147},
 				range=6,
 				radius=1,
-				dmg=8
+				dmg=8,
+				upgrades={
+					{name="damage",owned=false,cost=1, mod=3},
+					{name="range",owned=false,cost=1,mod=1},
+					{name="uses",owned=false,cost=1, mod=4},
+				},
 			},
 			{
 				name="fire fan",
+				spcost=3,
 				maxuses=15,
 				uses=15,
 				description="fire but fan",
@@ -908,23 +996,34 @@ function init_spellbook()
 				ani={160,161,162,163},
 				spelltype = spelltypes[3],
 				-- in fan type spells radius is an angle in degrees
-				radius=30,
+				angle=30,
 				mtype="heal",
 				range=4,
-				dmg=5
+				dmg=5,
+				upgrades={
+					{name="damage",owned=false,cost=1, mod=3},
+					{name="range",owned=false,cost=1,mod=1},
+					{name="uses",owned=false,cost=1, mod=4},
+				},
 			},
 			{
 				name="fire ball",
+				spcost=1,
 				maxuses=9,
 				uses=9,
 				description="fire but ball",
 				icon={x=40,y=64},
-				ani={160,161,162,163},
+				ani={148,149,150,151},
 				spelltype = spelltypes[1],
-				radius=30,
+				radius=2,
 				mtype="heal",
-				range=3,
-				dmg=5
+				range=4,
+				dmg=5,
+				upgrades={
+					{name="damage",owned=false,cost=1, mod=3},
+					{name="range",owned=false,cost=1,mod=1},
+					{name="uses",owned=false,cost=1, mod=4},
+				},
 			},
 		}
 end
@@ -1001,14 +1100,14 @@ aaa00a00777767770a00a0a00b0000b0800080800088880000000000000000000000000000000000
 00a00a000000aa00a0aaa00ab000000b0a8888a0899aa98800000000000000000000000000000000000000000000000000000000000000000000000000000000
 0aaa0a0000000a000a0a00a00b0000b000a88a0089a9a99800000000000000000000000000000000000000000000000000000000000000000000000000000000
 00a0000000000a0000aaaa0000bbbb00000aa00008a77a8000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+a000000000a00a000aa0a0a00a00a0a0000000000000000000000000000880000000000000000000000000000000000000000000000000000000000000000000
+a000000000a00a000a00a0a00a00a0a0000000000000000000008000008888000000000000000000000000000000000000000000000000000000000000000000
+a00000000aa0aa000a00a0a0aa0aa0a0000000000000000000088880008898000000000000000000000000000000000000000000000000000000000000000000
+aa0000000a00a0000a00a0a0a00a0a00000000000000880000089980088998800000000000000000000000000000000000000000000000000000000000000000
+0aa000000a00a0000aa0a00aa0aa0a0a000000000008880008889980889a99800000000000000000000000000000000000000000000000000000000000000000
+00a000000a0a000000a0a00aa0a00a0a000088000088998008999998899aa9880000000000000000000000000000000000000000000000000000000000000000
+00a00000aa0a00000aa0aa0a00a0a0aa00088800008999800899aaa889a9a9980000000000000000000000000000000000000000000000000000000000000000
+00a00000a0aa00000a000a0000a0a0a0000898000089aa80089aa7a808a77a800000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000aaaa00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000000000000000000aaaa000a0000a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000aa0000a0000a0a000000a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
