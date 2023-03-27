@@ -10,13 +10,13 @@ This is the first game I plan on completing in the pico-8 engine, with the end g
 - ~~stop enemy from showing collision with other enemies~~
 - ~~switch menu to utilize vertical and horizontal indices --> required for spell upgrading~~
 - ~~spell unlocking~~
-- deep copy function
-- spell upgrading
-- spell cast function
+- ~~deep copy function~~
+- spell upgrading -- In Progress
+- spell cast function -- In Progress
 - turn counter
-- spell cooldown (for enemies)
-- enemy spells
-- world gen
+- spell cooldown (for enemies) -- In Progress
+- enemy spells -- In Progress
+- world gen -- In Progress
 - death screen/handling
 - title screen and pre-game-start options
 - adjust spell menu highlighting?
