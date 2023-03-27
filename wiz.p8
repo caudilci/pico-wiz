@@ -231,7 +231,19 @@ function shallowcopy(t)
 	  t2[k] = v
 	end
 	return t2
-  end
+end
+
+function deepcopy(t)
+	local t2 = {}
+	for k,v in pairs(t) do
+		if type(v) == "table" then
+			t2[k] = deepcopy(v)
+		else
+			t2[k] = v
+		end
+	end
+	return t2
+end
 
 function fov(x,y,r)
 	local dx,dy
@@ -503,7 +515,20 @@ function update_menu()
 			use_item(item_menu_index)
 		elseif spell_menu_index>#player.spells and spellbook[spell_menu_index-1].spcost <= player.items[1] then
 			player.items[1]-= spellbook[spell_menu_index-1].spcost
-			add(player.spells, shallowcopy(spellbook[spell_menu_index-1]));
+			add(player.spells, deepcopy(spellbook[spell_menu_index-1]));
+		elseif in_upgrade_menu and player.spells[spell_menu_index - 1].upgrades[upgrade_menu_index].owned == false and player.spells[spell_menu_index - 1].upgrades[upgrade_menu_index].cost<player.items[1] then
+			local spell = player.spells[spell_menu_index - 1]
+			spell.upgrades[upgrade_menu_index].owned = true
+			
+			if upgrade_menu_index == 1 then
+				spell.dmg += spell.upgrades[1].mod
+			elseif upgrade_menu_index == 2 then
+				spell.range += spell.upgrades[2].mod
+			elseif upgrade_menu_index == 3 then
+				spell.uses += spell.upgrades[3].mod
+				spell.maxuses += spell.upgrades[3].mod
+			end
+
 		end
 	end
 end
@@ -654,8 +679,7 @@ function update_cast()
 		set_state("standby")
 		
 	elseif(btnp(4))then
-		add(ani_queue, {player.spells[player.spell_index].ani, target})
-		dmg(player.spells[player.spell_index].dmg, target)
+		cast_spell(player.spells[player.spell_index])
 		--select spell then standby
 		reset_range()
 		reset_target()
@@ -740,6 +764,11 @@ function dmg(damage, targets)
 	end
 end
 
+function cast_spell(spell, targets)
+	add(ani_queue, {spell.ani, target})
+	dmg(spell.dmg, target)
+end
+
 
 -->8
 -- mob
@@ -760,9 +789,9 @@ function init_player()
 		items={0,1,1},
 		collide=false
 	}
-	add(player.spells,spellbook[1])
-	add(player.spells,spellbook[2])
-	add(player.spells,spellbook[3])
+	add(player.spells,deepcopy(spellbook[1]))
+	add(player.spells,deepcopy(spellbook[2]))
+	add(player.spells,deepcopy(spellbook[3]))
 	add(mobs,player)
 end
 
@@ -884,6 +913,7 @@ function init_enemies()
 			spell_index=1,
 			meleedmg=2,
 			spells={},
+			cooldown=0,
 			collide=false
 		}
 	}

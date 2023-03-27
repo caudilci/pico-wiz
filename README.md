@@ -12,6 +12,7 @@ This is the first game I plan on completing in the pico-8 engine, with the end g
 - ~~spell unlocking~~
 - deep copy function
 - spell upgrading
+- spell cast function
 - turn counter
 - spell cooldown (for enemies)
 - enemy spells
