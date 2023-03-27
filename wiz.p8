@@ -978,28 +978,6 @@ end
 
 -->8
 --map gen
-function init_world()
-	level = 1
-	
-end
-
-function read_room_options()
-	rooms = []
-	for i=0, 15, 8 do
-		for x=0, 7 do
-			add(rooms, [])
-			for y=32, 39 do
-				local color = sget(x,y)
-				if (color == 5) then
-					add(rooms[#rooms], 1)
-				elseif (color == 7) then
-
-				end
-			end
-		end
-
-	end
-end
 
 -->8
 -- spellbook
