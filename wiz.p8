@@ -679,11 +679,19 @@ function update_cast()
 		set_state("standby")
 		
 	elseif(btnp(4))then
-		cast_spell(player.spells[player.spell_index])
-		--select spell then standby
-		reset_range()
-		reset_target()
-		set_state("turn")
+		if player.spells[player.spell_index].uses > 0 then
+			cast_spell(player.spells[player.spell_index])
+
+			reset_range()
+			reset_target()
+			set_state("turn")
+		else
+			reset_range()
+			reset_target()
+			-- play oom sound
+		end
+		
+		
 	elseif(btnp(0))then
 		local newx = targetp.x - 1
 		if includes_point(points,{x=newx,y=targetp.y}) then
@@ -765,6 +773,7 @@ function dmg(damage, targets)
 end
 
 function cast_spell(spell, targets)
+	spell.uses -= 1
 	add(ani_queue, {spell.ani, target})
 	dmg(spell.dmg, target)
 end
