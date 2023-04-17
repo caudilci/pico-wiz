@@ -674,12 +674,12 @@ function update_cast()
 			target = get_cone_points(player.x,player.y,targetp.x,targetp.y,player.spells[player.spell_index].angle, player.spells[player.spell_index].range)
 		end
 	end
-	if(btnp(5))then
+	if(btnp(4))then
 		reset_range()
 		reset_target()
 		set_state("standby")
 		
-	elseif(btnp(4))then
+	elseif(btnp(5))then
 		if player.spells[player.spell_index].uses > 0 then
 			cast_spell(player.spells[player.spell_index])
 
@@ -1082,7 +1082,7 @@ function init_spellbook()
 				uses=15,
 				description="fire but fan",
 				icon={x=32,y=64},
-				ani={160,161,162,163},
+				ani={148,149,150,151},
 				spelltype = spelltypes[3],
 				-- in fan type spells radius is an angle in degrees
 				angle=30,
