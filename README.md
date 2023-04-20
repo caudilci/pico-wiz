@@ -11,6 +11,7 @@ This is the first game I plan on completing in the pico-8 engine, with the end g
 - ~~switch menu to utilize vertical and horizontal indices --> required for spell upgrading~~
 - ~~spell unlocking~~
 - ~~deep copy function~~
+- fix spell menu bug -> can't select spell when menu is opened for the first time
 - spell upgrading -- In Progress
 - spell cast function -- In Progress
 - turn counter
