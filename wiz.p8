@@ -45,10 +45,16 @@ function _update()
 		update_menu()
 	elseif gamestate=="cast" then
 		update_cast()
+	elseif gamestate=="gameover" then
+		gameover()
 	end
 end
 
 function _draw()
+	if gamestate == "gameover" then
+		draw_gameover()
+		return
+	end
 	map(0)
 	-- print(gamestate,1,15,8)
 	draw_items()
@@ -63,23 +69,22 @@ function _draw()
 		draw_menu()
 	elseif gamestate=="cast" then
 		draw_cast()
+
 	end
 end
 
 function set_state(state)
 	if state == "standby" then
-		gamestate = state
 		tframe = -1
 	elseif state == "turn" then
 		update_enemies()
-		gamestate = state
 		tframe=1
 	elseif state == "menu" then
 		spell_menu_index = player.spell_index+1
-		gamestate = state
 	elseif state == "cast" then
-		gamestate = state
+	elseif state == "gameover" then
 	end
+	gamestate = state
 end
 
 function draw_hp(x,y,cb,co,ct,withoutline)
@@ -110,6 +115,17 @@ function draw_debug()
 	color(8)
 	for txt in all(debug) do
 		print(txt)
+	end
+end
+
+function draw_gameover()
+	print("gameover")
+	print("press ❎ to start over")
+end
+
+function gameover()
+	if btnp(5) then
+		_init()
 	end
 end
 
@@ -805,6 +821,9 @@ function init_player()
 end
 
 function update_player()
+	if player.hp <= 0 then
+		set_state("gameover")
+	end
 	if(btnp(2)) then
 		update_mob_pos(player, player.x,player.y-1)
 		collect_item(player.x,player.y)
