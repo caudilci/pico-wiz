@@ -91,9 +91,17 @@ function draw_hp(x,y,cb,co,ct,withoutline)
 end
 
 function draw_selected_spell()
-	rectfill(118,0,127,9,1)
-	rect(118,0,127,9,12)
+	local box_color1, box_color2
 	local spell = mobs[1].spells[mobs[1].spell_index]
+	if spell.uses == 0 then
+		box_color1 = 5
+		box_color2 = 6
+	else
+		box_color1 = 1
+		box_color2 = 12
+	end
+	rectfill(118,0,127,9,box_color1)
+	rect(118,0,127,9,box_color2)
 	sspr(spell.icon.x,spell.icon.y,8,8,119,1,8,8)
 end
 
@@ -680,19 +688,10 @@ function update_cast()
 		set_state("standby")
 		
 	elseif(btnp(5))then
-		if player.spells[player.spell_index].uses > 0 then
-			cast_spell(player.spells[player.spell_index])
-
-			reset_range()
-			reset_target()
-			set_state("turn")
-		else
-			reset_range()
-			reset_target()
-			-- play oom sound
-		end
-		
-		
+		cast_spell(player.spells[player.spell_index])
+		reset_range()
+		reset_target()
+		set_state("turn")	
 	elseif(btnp(0))then
 		local newx = targetp.x - 1
 		if includes_point(points,{x=newx,y=targetp.y}) then
@@ -825,8 +824,10 @@ function update_player()
 	elseif(btnp(4)) then
 		set_state("menu")
 	elseif(btnp(5)) then
-		set_state("cast")
-		init_cast()
+		if player.spells[player.spell_index].uses > 0 then
+			set_state("cast")
+			init_cast()
+		end
 	end
 	
 end
