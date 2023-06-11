@@ -208,6 +208,17 @@ end
 -->8
 -- helper functions
 
+function chunk_string(chunk_size, string)
+	local chunks = {}
+	local prev_index = 1
+	for i=chunk_size, #string, chunk_size do
+		add(chunks, sub(string, prev_index, i))
+		prev_index = i+1
+	end
+	add(chunks, sub(string, prev_index))
+	return chunks
+end
+
 function get_hp_draw_offset()
 	if player.maxhp >= 100 then
 		if player.hp >= 100 then
@@ -638,17 +649,6 @@ function draw_spell_description()
 		-- angle isn't really relevent to player
 		print('spread: '..spell.angle,7)
 	end
-end
-
-function chunk_string(chunk_size, string)
-	local chunks = {}
-	local prev_index = 1
-	for i=chunk_size, #string, chunk_size do
-		add(chunks, sub(string, prev_index, i))
-		prev_index = i+1
-	end
-	add(chunks, sub(string, prev_index))
-	return chunks
 end
 
 
