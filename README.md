@@ -12,7 +12,7 @@ This is the first game I plan on completing in the pico-8 engine, with the end g
 - ~~spell unlocking~~
 - ~~deep copy function~~
 - ~~fix spell menu bug -> can't select spell when menu is opened for the first time~~
-- add items as their own object like spells -- In Progress
+- ~~add items as their own object like spells~~
 - spell cast function -- In Progress
 - turn counter
 - spell cooldown (for enemies) -- In Progress

@@ -7,9 +7,6 @@ function _init()
 	gamestates = {"standby","turn","collide","menu","cast"}
 	gamestate = gamestates[1]
 	walls = {0}
-	item_sprites = {48,49,50,51}
-	items = {}
-	add(items,{x=4,y=4,id=2})
 	
 	dirx={-1,1,0,0,1,1,-1,-1}
 	diry={0,0,-1,1,-1,1,1,-1}
@@ -22,6 +19,7 @@ function _init()
 	ani_complete = true
 
 	init_spellbook()
+	init_items()
 	init_player()
 	init_cast()
 	init_enemies()
@@ -166,21 +164,69 @@ end
 -->8
 -- items
 
+function init_items()
+	floor_items = {}
+	items = {
+		{
+			-- health upgrade
+			sprite=48,
+			on_pickup = function ()
+				player.hp += 25
+				player.maxhp += 25
+			end
+		},
+		{
+			-- spell point
+			sprite=49,
+			on_pickup = function ()
+				player.sp += 1
+			end
+		},
+		{
+			name="health potion",
+			description="refills health",
+			sprite=50, 
+			icon= {x=16,y=24},
+			effect = function ()
+				player.hp = player.maxhp
+			end
+		},
+		{
+			name="mana potion",
+			description="refills spell uses for all spells",
+			sprite=51,
+			icon={x=24, y=24},
+			effect= function ()
+				for spell in all(player.spells) do
+					spell.uses = spell.maxuses
+				end
+			end
+		}
+	}
+	local initial_sp = deepcopy(items[2])
+	initial_sp.x=4
+	initial_sp.y=4
+	add(floor_items,initial_sp)
+	local initial_health_pot = deepcopy(items[3])
+	initial_health_pot.x = 4
+	initial_health_pot.y = 3
+	add(floor_items, initial_health_pot)
+end
+
 function collect_item(x,y)
 	local item = false
-	for i in all(items) do
+	for i in all(floor_items) do
 		if i.x == x and i.y == y then
 			item = i
 		end
 	end
 	if item then
-		if item.id == 1 then
-			player.maxhp+=25
-			player.hp+=25
+		if item.on_pickup then
+			item.on_pickup()
 		else
-			player.items[item.id-1] += 1
+			add(player.items, item)
 		end
-		del(items,item)
+		del(floor_items,item)
 	end
 end
 
@@ -198,8 +244,8 @@ function use_item(item_index)
 end
 
 function draw_items()
-	for item in all(items) do
-		spr(item_sprites[item.id],item.x*8,item.y*8)
+	for item in all(floor_items) do
+		spr(item.sprite,item.x*8,item.y*8)
 	end
 end
 
@@ -529,8 +575,8 @@ function update_menu()
 		if menu_tab_index == 1 then
 			if menu_vertical_index<=#player.spells then
 				player.spell_index = menu_vertical_index
-			elseif menu_vertical_index>#player.spells and spellbook[menu_vertical_index].spcost <= player.items[1] then
-				player.items[1]-= spellbook[menu_vertical_index].spcost
+			elseif menu_vertical_index>#player.spells and spellbook[menu_vertical_index].spcost <= player.sp then
+				player.sp-= spellbook[menu_vertical_index].spcost
 				add(player.spells, deepcopy(spellbook[menu_vertical_index]));
 			end
 		elseif menu_tab_index == 2 then 
@@ -599,8 +645,8 @@ function draw_status_menu()
 	rect(2,2,125,13,12)
 	rectfill(3,3,124,12,1)
 	draw_hp(3,3,0,0,7,false)
-	spr(item_sprites[2],116,4)
-	print(player.items[1], 111,5,7)
+	spr(items[2].sprite,116,4)
+	print(player.sp, 111,5,7)
 end
 
 function draw_menu_tabs()
@@ -785,6 +831,7 @@ function init_player()
 		dir=1,
 		sprites={240, 241},
 		flipx=false,
+		sp=0,
 		hp = 50,
 		maxhp = 50,
 		spell_index=1,
