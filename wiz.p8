@@ -183,7 +183,7 @@ function init_items()
 			end
 		},
 		{
-			name="health potion",
+			name="health pot",
 			description="refills health",
 			sprite=50, 
 			icon= {x=16,y=24},
@@ -192,7 +192,7 @@ function init_items()
 			end
 		},
 		{
-			name="mana potion",
+			name="mana pot",
 			description="refills spell uses for all spells",
 			sprite=51,
 			icon={x=24, y=24},
@@ -224,7 +224,17 @@ function collect_item(x,y)
 		if item.on_pickup then
 			item.on_pickup()
 		else
-			add(player.items, item)
+			local already_owned = false
+			for pitem in all(player.items) do
+				if pitem.name == item.name then
+					pitem.count += 1
+					already_owned = true
+				end
+			end
+			if not already_owned then
+				item.count=1
+				add(player.items, item)
+			end
 		end
 		del(floor_items,item)
 	end
@@ -332,7 +342,7 @@ function fov(x,y,r)
 	for i=0,360 do
 		dx=cos(i/360)
 		dy=sin(i/360)
-		local result = dofov(dx,dy,x,y,r)
+		local result = perffov(dx,dy,x,y,r)
 		for point in all(result) do
 			if not includes_point(visible, point) then
 					add(visible,point)
@@ -342,7 +352,7 @@ function fov(x,y,r)
 	return visible
 end
 
-function dofov(x,y,px,py,r)
+function perffov(x,y,px,py,r)
 	local ox,oy
 	local visible = {}
 	ox=px+0.5
@@ -435,7 +445,7 @@ function line_points(x1,y1,x2,y2)
 	for i=startang,endang do
 		dx=cos(i/360)
 		dy=sin(i/360)
-		local result = dofov(dx,dy,x1,y1,r)
+		local result = perffov(dx,dy,x1,y1,r)
 		if includes_point(result,{x=x2,y=y2}) then
 			for point in all(result) do
 				if not includes_point(visible, point) then
@@ -473,7 +483,7 @@ function get_cone_points(x,y,x1,y1,wa,r)
 	for i=s,e,countdir do
 		local dx=cos(i/360)
 		local dy=sin(i/360)
-		local result = dofov(dx,dy,x,y,r)
+		local result = perffov(dx,dy,x,y,r)
 		for point in all(result) do
 			if not includes_point(visible, point) then
 				add(visible,point)
@@ -535,7 +545,11 @@ function update_menu()
 				menu_vertical_index += 1
 			end
 		elseif menu_tab_index == 2 then 
-
+			if menu_vertical_index == #player.items then
+				menu_vertical_index = 1
+			else 
+				menu_vertical_index += 1
+			end
 		elseif menu_tab_index == 3 then
 
 		end
@@ -545,7 +559,7 @@ function update_menu()
 			if menu_tab_index == 1 then
 				menu_vertical_index = #spellbook
 			elseif menu_tab_index == 2 then 
-
+				menu_vertical_index = #player.items
 			elseif menu_tab_index == 3 then
 
 			end
@@ -580,7 +594,12 @@ function update_menu()
 				add(player.spells, deepcopy(spellbook[menu_vertical_index]));
 			end
 		elseif menu_tab_index == 2 then 
-
+			player.items[menu_vertical_index].effect()
+			if player.items[menu_vertical_index].count == 1 then
+				del(player.items, player.items[menu_vertical_index])
+			else
+				player.items[menu_vertical_index].count -= 1
+			end
 		elseif menu_tab_index == 3 then
 
 		end
@@ -588,25 +607,25 @@ function update_menu()
 	end
 end
 
--- todo: add variables for menu
--- colors, and text colors
--- maybe location/size
 function draw_menu()
 	draw_menu_tabs()
 	draw_status_menu()
+	rect(2, 22,64,125,12)
+	rectfill(3,23,63,124,1)
+	rect(64,22,125,75,12)
+	rectfill(65,23,124,124,1)
 	if menu_tab_index == 1 then
 		draw_spell_menu()
 		draw_spell_description()
 	elseif menu_tab_index == 2 then
-
+		draw_item_menu()
+		draw_item_description()
 	elseif menu_tab_index == 3 then
 
 	end
 end
 
 function draw_spell_menu()
-	rect(2, 22,64,125,12)
-	rectfill(3,23,63,124,1)
 	for i=1, count(spellbook) do
 		-- highlight spell looked at
 		if i==menu_vertical_index then
@@ -616,10 +635,6 @@ function draw_spell_menu()
 		end
 		if i<=#player.spells then
 			print(spellbook[i].name,4,24+7*(i-1),7)
-		else
-			print(spellbook[i].name,4,24+7*(i-1),5)
-		end
-		if i<=#player.spells then
 			if player.spells[i].uses<10 then
 				if player.spells[i].maxuses<10 then
 					print(player.spells[i].uses.."/"..player.spells[i].maxuses,52,24+7*(i-1),7)
@@ -630,6 +645,7 @@ function draw_spell_menu()
 				print(player.spells[i].uses.."/"..player.spells[i].maxuses,44,24+7*(i-1),7)
 			end
 		else
+			print(spellbook[i].name,4,24+7*(i-1),5)
 			if spellbook[i].spcost<10 then
 				print(''..spellbook[i].spcost..'sp',52,24+7*(i-1),5)
 			else
@@ -665,12 +681,33 @@ function draw_menu_tabs()
 end
 
 function draw_item_menu()
+	for i=1, count(player.items) do
+		-- highlight spell looked at
+		if i==menu_vertical_index then
+			rectfill(3,23+7*(i-1),63,23+6+7*(i-1),12)
+		end
+		print(player.items[i].name,4,24+7*(i-1),7)
+		if player.items[i].count<10 then
+			print(player.items[i].count,59,24+7*(i-1),7)
+		else
+			print(player.items[i].count,55,24+7*(i-1),7)
+		end
+	end
+end
 
+function draw_item_description()
+	local item=player.items[menu_vertical_index]
+	if item then
+		sspr(item.icon.x,item.icon.y,8,8,66,24,16,16)
+		print(item.name, 85, 28, 7)
+		cursor(66,42)
+		color(7)
+		local description_chunks = chunk_string(15, item.description)
+		foreach(description_chunks, print)
+	end
 end
 
 function draw_spell_description()
-	rect(64,22,125,75,12)
-	rectfill(65,23,124,124,1)
 	local spell = {}
 	if menu_vertical_index<=#player.spells then
 		spell = player.spells[menu_vertical_index]
@@ -678,7 +715,7 @@ function draw_spell_description()
 		spell = spellbook[menu_vertical_index]
 	end
 	sspr(spell.icon.x,spell.icon.y,8,8,66,24,16,16)
-	print(spell.name, 88, 28, 7)
+	print(spell.name, 85, 28, 7)
 	cursor(66,42)
 	color(7)
 	local description_chunks = chunk_string(15, spell.description)
@@ -836,8 +873,8 @@ function init_player()
 		maxhp = 50,
 		spell_index=1,
 		spells={},
+		items={},
 		-- {item=spriteNum, ammt=num}
-		items={0,1,1},
 		collide=false
 	}
 	add(player.spells,deepcopy(spellbook[1]))

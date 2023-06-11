@@ -20,7 +20,7 @@ This is the first game I plan on completing in the pico-8 engine, with the end g
 - world gen -- In Progress
 - death screen/handling
 - title screen and pre-game-start options
-- adjust spell menu highlighting?
+- adjust spell menu highlighting remove player location from list
 - center usable items in menu
 - polish
 
