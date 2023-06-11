@@ -11,8 +11,8 @@ This is the first game I plan on completing in the pico-8 engine, with the end g
 - ~~switch menu to utilize vertical and horizontal indices --> required for spell upgrading~~
 - ~~spell unlocking~~
 - ~~deep copy function~~
-- fix spell menu bug -> can't select spell when menu is opened for the first time
-- spell upgrading -- In Progress
+- ~~fix spell menu bug -> can't select spell when menu is opened for the first time~~
+- add items as their own object like spells -- In Progress
 - spell cast function -- In Progress
 - turn counter
 - spell cooldown (for enemies) -- In Progress
@@ -25,6 +25,7 @@ This is the first game I plan on completing in the pico-8 engine, with the end g
 - polish
 
 ### Stretch Goals
+- spell upgrading
 - mob/enemy encyclopedia
 - mob typing --> rock>fire fire>wood etc
 - status effects --> health bar denotes status effect for enemies, not sure about player
@@ -34,4 +35,5 @@ This is the first game I plan on completing in the pico-8 engine, with the end g
     - teleportitis
 - summons/allied mobs
 - enough spells to scroll menu
+- usable vs key items?
 - final boss?

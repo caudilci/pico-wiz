@@ -80,7 +80,6 @@ function set_state(state)
 		update_enemies()
 		tframe=1
 	elseif state == "menu" then
-		spell_menu_index = player.spell_index+1
 	elseif state == "cast" then
 	elseif state == "gameover" then
 	end
@@ -461,100 +460,74 @@ end
 -- menu
 
 function init_menu()
-	spell_menu_index = 1
-	upgrade_menu_index=1
-	item_menu_index=2
-	in_upgrade_menu = false
+	menu_tab_index = 1
+	menu_vertical_index = 1
+	menu_tabs = {"spells", "items", "skills"}
+	menu_startx, menu_starty, menu_endx, menu_endy = 2,2,126, 126
+	tab_menu_height = 11
+	status_menu_heigt = 11
+	-- in_upgrade_menu = false
 end
 
 function update_menu()
 	if btnp(3) then
-		if not in_upgrade_menu then
-			if spell_menu_index == #spellbook+1 then
-				spell_menu_index=1
-				item_menu_index=2
-			elseif spell_menu_index==1 then
-				item_menu_index=1
-				spell_menu_index+=1
-			else
-				spell_menu_index+=1
+		if menu_tab_index == 1 then
+			if menu_vertical_index == #spellbook then
+				menu_vertical_index = 1
+			else 
+				menu_vertical_index += 1
 			end
-		else
-			local upgrades = player.spells[spell_menu_index-1].upgrades
-			if upgrade_menu_index == #upgrades then
-				upgrade_menu_index = 1
-			else
-				upgrade_menu_index+=1
-			end
+		elseif menu_tab_index == 2 then 
+
+		elseif menu_tab_index == 3 then
+
 		end
 		
 	elseif btnp(2) then
-		if not in_upgrade_menu then
-			if spell_menu_index == 1 then
-				spell_menu_index = #spellbook+1
-				item_menu_index=2
-			elseif spell_menu_index == 2 then
-				spell_menu_index-=1
-				item_menu_index=2
-			else
-				spell_menu_index-=1
+		if menu_vertical_index == 1 then
+			if menu_tab_index == 1 then
+				menu_vertical_index = #spellbook
+			elseif menu_tab_index == 2 then 
+
+			elseif menu_tab_index == 3 then
+
 			end
 		else
-			local upgrades = player.spells[spell_menu_index-1].upgrades
-			if upgrade_menu_index == 1 then
-				upgrade_menu_index = #upgrades
-			else
-				upgrade_menu_index-=1
-			end
+			menu_vertical_index -= 1
 		end
 		
 	elseif btnp(0) then
-		if spell_menu_index==1 then
-			if item_menu_index==2 then
-				item_menu_index=3
-			else
-				item_menu_index-=1
-			end
-		elseif spell_menu_index<=#player.spells+1 then
-			in_upgrade_menu = not in_upgrade_menu
+		if(menu_tab_index == 1) then
+			menu_tab_index = #menu_tabs
+		else
+			menu_tab_index -= 1
 		end
+		menu_vertical_index=1
 	elseif btnp(1) then
-		if spell_menu_index==1 then
-			if item_menu_index==3 then
-				item_menu_index=2
-			else
-				item_menu_index+=1
-			end
-		elseif spell_menu_index<=#player.spells+1 then
-			in_upgrade_menu = not in_upgrade_menu
+		if(menu_tab_index == #menu_tabs) then
+			menu_tab_index = 1
+		else
+			menu_tab_index += 1
 		end
+		menu_vertical_index = 1
 	elseif btnp(5) then
-		spell_menu_index=player.spell_index+1
-		item_menu_index=1
+		menu_vertical_index = 1
+		menu_tab_index = 1
 		set_state("standby")
 	elseif btnp(4) then
-		--select spell then standby
-		if item_menu_index==1 and spell_menu_index>1 and spell_menu_index<=#player.spells+1 then
-			player.spell_index = spell_menu_index-1
-		elseif spell_menu_index==1 then
-			use_item(item_menu_index)
-		elseif spell_menu_index>#player.spells and spellbook[spell_menu_index-1].spcost <= player.items[1] then
-			player.items[1]-= spellbook[spell_menu_index-1].spcost
-			add(player.spells, deepcopy(spellbook[spell_menu_index-1]));
-		elseif in_upgrade_menu and player.spells[spell_menu_index - 1].upgrades[upgrade_menu_index].owned == false and player.spells[spell_menu_index - 1].upgrades[upgrade_menu_index].cost<player.items[1] then
-			local spell = player.spells[spell_menu_index - 1]
-			spell.upgrades[upgrade_menu_index].owned = true
-			
-			if upgrade_menu_index == 1 then
-				spell.dmg += spell.upgrades[1].mod
-			elseif upgrade_menu_index == 2 then
-				spell.range += spell.upgrades[2].mod
-			elseif upgrade_menu_index == 3 then
-				spell.uses += spell.upgrades[3].mod
-				spell.maxuses += spell.upgrades[3].mod
+		if menu_tab_index == 1 then
+			if menu_vertical_index<=#player.spells then
+				player.spell_index = menu_vertical_index
+			elseif menu_vertical_index>#player.spells and spellbook[menu_vertical_index].spcost <= player.items[1] then
+				player.items[1]-= spellbook[menu_vertical_index].spcost
+				add(player.spells, deepcopy(spellbook[menu_vertical_index]));
 			end
+		elseif menu_tab_index == 2 then 
+
+		elseif menu_tab_index == 3 then
 
 		end
+
 	end
 end
 
@@ -562,83 +535,103 @@ end
 -- colors, and text colors
 -- maybe location/size
 function draw_menu()
-	draw_spell_menu()
-	draw_spell_description()
-	draw_item_menu()
-	draw_spell_upgrades()
+	draw_menu_tabs()
+	draw_status_menu()
+	if menu_tab_index == 1 then
+		draw_spell_menu()
+		draw_spell_description()
+	elseif menu_tab_index == 2 then
+
+	elseif menu_tab_index == 3 then
+
+	end
 end
 
 function draw_spell_menu()
-	rect(2,13,64,125,12)
-	rectfill(3,14,63,124,1)
+	rect(2, 22,64,125,12)
+	rectfill(3,23,63,124,1)
 	for i=1, count(spellbook) do
 		-- highlight spell looked at
-		if i==spell_menu_index-1 and frame%30>15 and spell_menu_index!=1 and not in_upgrade_menu then
-			rectfill(3,14+7*(i-1),63,14+6+7*(i-1),13)
+		if i==menu_vertical_index then
+			rectfill(3,23+7*(i-1),63,23+6+7*(i-1),12)
 		elseif i==player.spell_index then
-			rectfill(3,14+7*(player.spell_index-1),63,14+6+7*(player.spell_index-1),13)
+			rectfill(3,23+7*(player.spell_index-1),63,23+6+7*(player.spell_index-1),13)
 		end
 		if i<=#player.spells then
-			print(spellbook[i].name,4,15+7*(i-1),7)
+			print(spellbook[i].name,4,24+7*(i-1),7)
 		else
-			print(spellbook[i].name,4,15+7*(i-1),5)
+			print(spellbook[i].name,4,24+7*(i-1),5)
 		end
 		if i<=#player.spells then
 			if player.spells[i].uses<10 then
 				if player.spells[i].maxuses<10 then
-					print(player.spells[i].uses.."/"..player.spells[i].maxuses,52,15+7*(i-1),7)
+					print(player.spells[i].uses.."/"..player.spells[i].maxuses,52,24+7*(i-1),7)
 				else
-					print(player.spells[i].uses.."/"..player.spells[i].maxuses,48,15+7*(i-1),7)
+					print(player.spells[i].uses.."/"..player.spells[i].maxuses,48,24+7*(i-1),7)
 				end
 			else
-				print(player.spells[i].uses.."/"..player.spells[i].maxuses,44,15+7*(i-1),7)
+				print(player.spells[i].uses.."/"..player.spells[i].maxuses,44,24+7*(i-1),7)
 			end
 		else
 			if spellbook[i].spcost<10 then
-				print(''..spellbook[i].spcost..'sp',52,15+7*(i-1),5)
+				print(''..spellbook[i].spcost..'sp',52,24+7*(i-1),5)
 			else
-				print(''..spellbook[i].spcost..'sp',48,15+7*(i-1),5)
+				print(''..spellbook[i].spcost..'sp',48,24+7*(i-1),5)
 			end
 		end
 	end
 end
 
-function draw_item_menu()
+function draw_status_menu()
+	rect(2,2,125,13,12)
+	rectfill(3,3,124,12,1)
 	rect(2,2,125,13,12)
 	rectfill(3,3,124,12,1)
 	draw_hp(3,3,0,0,7,false)
-	for i=3, #item_sprites do
-		if spell_menu_index==1 and i-1==item_menu_index and frame%30<15 then
-			rectfill(27+get_hp_draw_offset()+18*(i-2),3,43+get_hp_draw_offset()+18*(i-2),12,13)
-		end
-		spr(item_sprites[i],34+get_hp_draw_offset()+18*(i-2),4)
-		print(player.items[i-1], 29+get_hp_draw_offset()+18*(i-2),5,7)
-	end
 	spr(item_sprites[2],116,4)
 	print(player.items[1], 111,5,7)
 end
 
-function draw_spell_description()
-	rect(64,13,125,75,12)
-	rectfill(65,14,124,74,1)
-	local spell = {}
-	if spell_menu_index==1 then
-		spell = player.spells[player.spell_index]
-	elseif spell_menu_index<=#player.spells then
-		spell = player.spells[spell_menu_index-1]
-	else
-		spell = spellbook[spell_menu_index-1]
+function draw_menu_tabs()
+	local menu_item_width = 125/#menu_tabs
+	for i=1, #menu_tabs do
+		local text_color = 6
+		local background_color = 1
+		if i == menu_tab_index then
+			text_color = 7
+			background_color = 12
+		end
+		rectfill(3+(i-1)*menu_item_width,13, i*menu_item_width, 22, background_color)
+		rect(2+(i-1)*menu_item_width,13, i*(menu_item_width)+1, 22, 12)
+		print(menu_tabs[i], 6+(i-1)*menu_item_width, 15, text_color)
 	end
-	sspr(spell.icon.x,spell.icon.y,8,8,66,15,16,16)
-	print(spell.name, 88, 19, 7)
-	cursor(66,33)
-	print(spell.description,7)
+end
+
+function draw_item_menu()
+
+end
+
+function draw_spell_description()
+	rect(64,22,125,75,12)
+	rectfill(65,23,124,124,1)
+	local spell = {}
+	if menu_vertical_index<=#player.spells then
+		spell = player.spells[menu_vertical_index]
+	else
+		spell = spellbook[menu_vertical_index]
+	end
+	sspr(spell.icon.x,spell.icon.y,8,8,66,24,16,16)
+	print(spell.name, 88, 28, 7)
+	cursor(66,42)
+	color(7)
+	local description_chunks = chunk_string(15, spell.description)
+	foreach(description_chunks, print)
 	print('')
-	print('uses: '..spell.uses..'/'..spell.maxuses, 7)
-	print('dmg: '..spell.dmg, 7)
-	print('range: '..spell.range,7)
+	print('uses: '..spell.uses..'/'..spell.maxuses)
+	print('dmg: '..spell.dmg)
+	print('range: '..spell.range)
 	if spell.spelltype == "ball" then
-		print('radius: '..spell.radius, 7)
+		print('radius: '..spell.radius)
 	elseif spell.spelltype == "bolt" then
 		
 	elseif spell.spelltype == "fan" then
@@ -647,32 +640,18 @@ function draw_spell_description()
 	end
 end
 
-function draw_spell_upgrades()
-	rect(64,75,125,125,12)
-	rectfill(65,76,124,124,1)
-	if spell_menu_index > 1 then
-		local spell_known = spell_menu_index <= #player.spells
-		print('upgrades:',66,77,7)
-		local upgrades
-		if spell_known then
-			upgrades = player.spells[spell_menu_index-1].upgrades
-		else
-			upgrades = spellbook[spell_menu_index-1].upgrades
-		end
-		for i=1, #upgrades do
-			if i==upgrade_menu_index and frame%30<15 and in_upgrade_menu then
-				rectfill(66,83+((i-1)*7),124,88+((i-1)*7),13)
-			end
-			if upgrades[i].owned then
-				print(upgrades[i].name,66,83+((i-1)*7),11)
-				print(upgrades[i].cost,121,83+((i-1)*7),11)
-			else
-				print(upgrades[i].name,66,83+((i-1)*7),7)
-				print(upgrades[i].cost,121,83+((i-1)*7),7)
-			end
-		end
+function chunk_string(chunk_size, string)
+	local chunks = {}
+	local prev_index = 1
+	for i=chunk_size, #string, chunk_size do
+		add(chunks, sub(string, prev_index, i))
+		prev_index = i+1
 	end
+	add(chunks, sub(string, prev_index))
+	return chunks
 end
+
+
 -->8
 -- cast
 function init_cast()
@@ -698,12 +677,12 @@ function update_cast()
 			target = get_cone_points(player.x,player.y,targetp.x,targetp.y,player.spells[player.spell_index].angle, player.spells[player.spell_index].range)
 		end
 	end
-	if(btnp(4))then
+	if(btnp(5))then
 		reset_range()
 		reset_target()
 		set_state("standby")
 		
-	elseif(btnp(5))then
+	elseif(btnp(4))then
 		cast_spell(player.spells[player.spell_index])
 		reset_range()
 		reset_target()
@@ -848,7 +827,6 @@ function update_player()
 			init_cast()
 		end
 	end
-	
 end
 
 function update_mob_pos(mob, x,y)
