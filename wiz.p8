@@ -17,6 +17,8 @@ function _init()
 	tframe = -1
 	move_complete = true
 	ani_complete = true
+	floor = 1
+	turn = 1
 
 	init_spellbook()
 	init_items()
@@ -54,7 +56,6 @@ function _draw()
 		return
 	end
 	map(0)
-	-- print(gamestate,1,15,8)
 	draw_items()
 	draw_all_mobs()
 	draw_enemy_health()
@@ -76,6 +77,8 @@ function set_state(state)
 		tframe = -1
 	elseif state == "turn" then
 		update_enemies()
+		turn += 1
+		add(debug, turn)
 		tframe=1
 	elseif state == "menu" then
 	elseif state == "cast" then
@@ -529,7 +532,7 @@ end
 function init_menu()
 	menu_tab_index = 1
 	menu_vertical_index = 1
-	menu_tabs = {"spells", "items", "skills"}
+	menu_tabs = {"spells", "items"}
 	menu_startx, menu_starty, menu_endx, menu_endy = 2,2,126, 126
 	tab_menu_height = 11
 	status_menu_heigt = 11
@@ -568,7 +571,7 @@ function update_menu()
 		end
 		
 	elseif btnp(0) then
-		if(menu_tab_index == 1) then
+		if menu_tab_index == 1 then
 			menu_tab_index = #menu_tabs
 		else
 			menu_tab_index -= 1
@@ -610,10 +613,10 @@ end
 function draw_menu()
 	draw_menu_tabs()
 	draw_status_menu()
-	rect(2, 22,64,125,12)
-	rectfill(3,23,63,124,1)
-	rect(64,22,125,75,12)
-	rectfill(65,23,124,124,1)
+	rect(2, 21,64,125,12)
+	rectfill(3,22,63,124,1)
+	rect(64,21,125,75,12)
+	rectfill(65,22,124,124,1)
 	if menu_tab_index == 1 then
 		draw_spell_menu()
 		draw_spell_description()
@@ -629,27 +632,27 @@ function draw_spell_menu()
 	for i=1, count(spellbook) do
 		-- highlight spell looked at
 		if i==menu_vertical_index then
-			rectfill(3,23+7*(i-1),63,23+6+7*(i-1),12)
+			rectfill(3,22+7*(i-1),63,22+6+7*(i-1),12)
 		elseif i==player.spell_index then
-			rectfill(3,23+7*(player.spell_index-1),63,23+6+7*(player.spell_index-1),13)
+			rectfill(3,22+7*(player.spell_index-1),63,22+6+7*(player.spell_index-1),13)
 		end
 		if i<=#player.spells then
-			print(spellbook[i].name,4,24+7*(i-1),7)
+			print(spellbook[i].name,4,23+7*(i-1),7)
 			if player.spells[i].uses<10 then
 				if player.spells[i].maxuses<10 then
-					print(player.spells[i].uses.."/"..player.spells[i].maxuses,52,24+7*(i-1),7)
+					print(player.spells[i].uses.."/"..player.spells[i].maxuses,52,23+7*(i-1),7)
 				else
-					print(player.spells[i].uses.."/"..player.spells[i].maxuses,48,24+7*(i-1),7)
+					print(player.spells[i].uses.."/"..player.spells[i].maxuses,48,23+7*(i-1),7)
 				end
 			else
-				print(player.spells[i].uses.."/"..player.spells[i].maxuses,44,24+7*(i-1),7)
+				print(player.spells[i].uses.."/"..player.spells[i].maxuses,44,23+7*(i-1),7)
 			end
 		else
-			print(spellbook[i].name,4,24+7*(i-1),5)
+			print(spellbook[i].name,4,23+7*(i-1),5)
 			if spellbook[i].spcost<10 then
-				print(''..spellbook[i].spcost..'sp',52,24+7*(i-1),5)
+				print(''..spellbook[i].spcost..'sp',52,23+7*(i-1),5)
 			else
-				print(''..spellbook[i].spcost..'sp',48,24+7*(i-1),5)
+				print(''..spellbook[i].spcost..'sp',48,23+7*(i-1),5)
 			end
 		end
 	end
@@ -666,31 +669,29 @@ function draw_status_menu()
 end
 
 function draw_menu_tabs()
-	local menu_item_width = 125/#menu_tabs
-	for i=1, #menu_tabs do
-		local text_color = 6
-		local background_color = 1
-		if i == menu_tab_index then
-			text_color = 7
-			background_color = 12
-		end
-		rectfill(3+(i-1)*menu_item_width,13, i*menu_item_width, 22, background_color)
-		rect(2+(i-1)*menu_item_width,13, i*(menu_item_width)+1, 22, 12)
-		print(menu_tabs[i], 6+(i-1)*menu_item_width, 15, text_color)
+	local text_color1, text_color2, background_color1, background_color2 = 6, 7, 1, 12
+	if menu_tab_index == 1 then
+		text_color1, text_color2, background_color1, background_color2 = 7, 6, 12, 1
 	end
+	rectfill(3,13, 64, 21, background_color1)
+	rect(2,13, 65, 21, 12)
+	print("spells", 20, 15, text_color1)
+	rectfill(65,13, 125, 21, background_color2)
+	rect(64,13, 125, 21, 12)
+	print("items", 85, 15, text_color2)
 end
 
 function draw_item_menu()
 	for i=1, count(player.items) do
 		-- highlight spell looked at
 		if i==menu_vertical_index then
-			rectfill(3,23+7*(i-1),63,23+6+7*(i-1),12)
+			rectfill(3,22+7*(i-1),63,22+6+7*(i-1),12)
 		end
-		print(player.items[i].name,4,24+7*(i-1),7)
+		print(player.items[i].name,4,23+7*(i-1),7)
 		if player.items[i].count<10 then
-			print(player.items[i].count,59,24+7*(i-1),7)
+			print(player.items[i].count,59,23+7*(i-1),7)
 		else
-			print(player.items[i].count,55,24+7*(i-1),7)
+			print(player.items[i].count,55,23+7*(i-1),7)
 		end
 	end
 end
@@ -698,9 +699,9 @@ end
 function draw_item_description()
 	local item=player.items[menu_vertical_index]
 	if item then
-		sspr(item.icon.x,item.icon.y,8,8,66,24,16,16)
-		print(item.name, 85, 28, 7)
-		cursor(66,42)
+		sspr(item.icon.x,item.icon.y,8,8,66,23,16,16)
+		print(item.name, 85, 27, 7)
+		cursor(66,41)
 		color(7)
 		local description_chunks = chunk_string(15, item.description)
 		foreach(description_chunks, print)
@@ -714,9 +715,9 @@ function draw_spell_description()
 	else
 		spell = spellbook[menu_vertical_index]
 	end
-	sspr(spell.icon.x,spell.icon.y,8,8,66,24,16,16)
-	print(spell.name, 85, 28, 7)
-	cursor(66,42)
+	sspr(spell.icon.x,spell.icon.y,8,8,66,23,16,16)
+	print(spell.name, 85, 27, 7)
+	cursor(66,41)
 	color(7)
 	local description_chunks = chunk_string(15, spell.description)
 	foreach(description_chunks, print)
@@ -881,6 +882,12 @@ function init_player()
 	add(player.spells,deepcopy(spellbook[2]))
 	add(player.spells,deepcopy(spellbook[3]))
 	add(mobs,player)
+	local initial_health_pot = deepcopy(items[3])
+	initial_health_pot.count = 1
+	local initial_mana_pot = deepcopy(items[4])
+	initial_mana_pot.count = 1
+	add(player.items, initial_health_pot)
+	add(player.items, initial_mana_pot)
 end
 
 function update_player()
@@ -1011,7 +1018,6 @@ function init_enemies()
 	}
 	add_enemy(11,11,1)
 	add_enemy(11,12,1)
-
 	add_enemy(12,11,1)
 	add_enemy(12,12,1)
 end
@@ -1129,11 +1135,6 @@ function init_spellbook()
 				range=4,
 				dmg=0,
 				cooldown=3,
-				upgrades={
-					{name="damage",owned=false,cost=1, mod=3},
-					{name="range",owned=false,cost=1,mod=1},
-					{name="uses",owned=false,cost=1, mod=4},
-				},
 				additional_effect = function () end
 			},
 			--different heal levels that cause enemy status effects
@@ -1151,11 +1152,6 @@ function init_spellbook()
 				range=6,
 				radius=1,
 				dmg=8,
-				upgrades={
-					{name="damage",owned=false,cost=1, mod=3},
-					{name="range",owned=false,cost=1,mod=1},
-					{name="uses",owned=false,cost=1, mod=4},
-				},
 			},
 			{
 				name="fire fan",
@@ -1171,11 +1167,6 @@ function init_spellbook()
 				mtype="heal",
 				range=4,
 				dmg=5,
-				upgrades={
-					{name="damage",owned=false,cost=1, mod=3},
-					{name="range",owned=false,cost=1,mod=1},
-					{name="uses",owned=false,cost=1, mod=4},
-				},
 			},
 			{
 				name="fire ball",
@@ -1190,11 +1181,6 @@ function init_spellbook()
 				mtype="heal",
 				range=4,
 				dmg=5,
-				upgrades={
-					{name="damage",owned=false,cost=1, mod=3},
-					{name="range",owned=false,cost=1,mod=1},
-					{name="uses",owned=false,cost=1, mod=4},
-				},
 			},
 		}
 end
