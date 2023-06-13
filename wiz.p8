@@ -75,6 +75,14 @@ end
 function set_state(state)
 	if state == "standby" then
 		tframe = -1
+		if #mobs == 1 then
+			for item in all(floor_items) do
+				if item.sprite == 52 then
+					add_item(item.x,item.y, 4)
+					del(floor_items, item)
+				end
+			end
+		end
 	elseif state == "turn" then
 		update_enemies()
 		turn += 1
@@ -185,6 +193,19 @@ function init_items()
 			end
 		},
 		{
+			-- closed portal
+			sprite=52,
+		},
+		{
+			-- open portal
+			sprite=53,
+			on_pickup = function ()
+				floor += 1
+				floor_items={}
+				init_world()
+			end
+		},
+		{
 			name="health pot",
 			description="refills health",
 			sprite=50, 
@@ -233,12 +254,14 @@ function collect_item(x,y)
 					already_owned = true
 				end
 			end
-			if not already_owned then
+			if not already_owned and item.sprite != 52 then
 				item.count=1
 				add(player.items, item)
 			end
 		end
-		del(floor_items,item)
+		if item.sprite != 52 then
+			del(floor_items,item)
+		end
 	end
 end
 
@@ -881,9 +904,9 @@ function init_player()
 	add(player.spells,deepcopy(spellbook[2]))
 	add(player.spells,deepcopy(spellbook[3]))
 	add(mobs,player)
-	local initial_health_pot = deepcopy(items[3])
+	local initial_health_pot = deepcopy(items[5])
 	initial_health_pot.count = 1
-	local initial_mana_pot = deepcopy(items[4])
+	local initial_mana_pot = deepcopy(items[6])
 	initial_mana_pot.count = 1
 	add(player.items, initial_health_pot)
 	add(player.items, initial_mana_pot)
@@ -1063,7 +1086,6 @@ end
 -->8
 --map gen
 function init_world()
-	level = 1
 	read_room_options()
 	generate_world()
 	player.x,player.y = get_rand_open_tile()
@@ -1149,12 +1171,15 @@ function generate_items()
 	add_item(upgradex,upgradey, 1)
 	-- consumable
 	local consumablex, consumabley = get_rand_open_item_tile()
-	add_item(consumablex,consumabley, flr(rnd(2)+3))
+	add_item(consumablex,consumabley, flr(rnd(2)+5))
+	-- portal
+	local portalx, portaly = get_rand_open_item_tile()
+	add_item(portalx, portaly, 3)
 end
 
 function get_rand_open_item_tile()
 	local x,y = get_rand_open_tile()
-	while includes_point(floor_items, {x= x, y=y}) or ( x == player.x and y == player.y) do
+	while (x == player.x and y == player.y) or includes_point(floor_items, {x= x, y=y})  do
 		x,y = get_rand_open_tile()
 	end
 	return x,y
