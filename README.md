@@ -14,18 +14,20 @@ This is the first game I plan on completing in the pico-8 engine, with the end g
 - ~~fix spell menu bug -> can't select spell when menu is opened for the first time~~
 - ~~add items as their own object like spells~~
 - spell cast function -- In Progress
-- turn counter
+- turn counter/floor counter UI
+- spell upgrades -- In Progress
 - spell cooldown (for enemies) -- In Progress
 - enemy spells -- In Progress
 - world gen -- In Progress
 - death screen/handling
 - title screen and pre-game-start options
 - adjust spell menu highlighting remove player location from list
-- center usable items in menu
+- auto pickup items on level complete -> maybe replacing spell cast functionality
+- auto target nearest enemy on cast
 - polish
 
 ### Stretch Goals
-- spell upgrading
+- item/upgrade shop?
 - mob/enemy encyclopedia
 - mob typing --> rock>fire fire>wood etc
 - status effects --> health bar denotes status effect for enemies, not sure about player
