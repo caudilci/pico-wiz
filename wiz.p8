@@ -78,7 +78,6 @@ function set_state(state)
 	elseif state == "turn" then
 		update_enemies()
 		turn += 1
-		add(debug, turn)
 		tframe=1
 	elseif state == "menu" then
 	elseif state == "cast" then
@@ -206,14 +205,14 @@ function init_items()
 			end
 		}
 	}
-	local initial_sp = deepcopy(items[2])
-	initial_sp.x=4
-	initial_sp.y=4
-	add(floor_items,initial_sp)
-	local initial_health_pot = deepcopy(items[3])
-	initial_health_pot.x = 4
-	initial_health_pot.y = 3
-	add(floor_items, initial_health_pot)
+end
+
+function add_item(x,y,type)
+	local baseitem = items[type]
+	local item = deepcopy(baseitem)
+	item.x=x
+	item.y=y
+	add(floor_items,item)
 end
 
 function collect_item(x,y)
@@ -999,6 +998,7 @@ function init_enemies()
 	enemyid=1
 	enemy_types = {
 		{
+			-- bat
 			id=-1,
 			x=12,
 			y=12,
@@ -1016,10 +1016,6 @@ function init_enemies()
 			collide=false
 		}
 	}
-	add_enemy(11,11,1)
-	add_enemy(11,12,1)
-	add_enemy(12,11,1)
-	add_enemy(12,12,1)
 end
 
 function add_enemy(x,y,type)
@@ -1070,6 +1066,9 @@ function init_world()
 	level = 1
 	read_room_options()
 	generate_world()
+	player.x,player.y = get_rand_open_tile()
+	generate_enemies()
+	generate_items()
 end
 
 function read_room_options()
@@ -1114,6 +1113,51 @@ function generate_world()
 		mset(i,15, 1)
 		mset(15,i,1)
 	end
+end
+
+function get_rand_open_tile()
+	local x,y,is_open = -1, -1, false
+	while not is_open do
+		x, y = flr(rnd(13))+1, flr(rnd(13))+1
+		if mget(x, y) == 2 then
+			is_open = true
+		end
+	end
+	return x,y
+end
+
+function generate_enemies()
+	for i=1, floor do
+		local x,y = get_rand_open_tile()
+		while x == player.x and y==player.y do
+			x,y = get_rand_open_tile()
+		end
+		-- TODO: randomize based on floor
+		add_enemy(x,y, 1)
+	end
+end
+
+function generate_items()
+	-- sp
+	for i=1, 3 do
+		local x,y = get_rand_open_item_tile()
+		add_item(x,y,2)
+	end
+	-- upgrade
+	local upgradex, upgradey = get_rand_open_item_tile()
+	-- TODO: update with flr(rnd(max_upgrade_index))+1
+	add_item(upgradex,upgradey, 1)
+	-- consumable
+	local consumablex, consumabley = get_rand_open_item_tile()
+	add_item(consumablex,consumabley, flr(rnd(2)+3))
+end
+
+function get_rand_open_item_tile()
+	local x,y = get_rand_open_tile()
+	while includes_point(floor_items, {x= x, y=y}) or ( x == player.x and y == player.y) do
+		x,y = get_rand_open_tile()
+	end
+	return x,y
 end
 
 -->8
