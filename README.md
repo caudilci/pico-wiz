@@ -13,7 +13,7 @@ This is the first game I plan on completing in the pico-8 engine, with the end g
 - ~~deep copy function~~
 - ~~fix spell menu bug -> can't select spell when menu is opened for the first time~~
 - ~~add items as their own object like spells~~
-- fix spell buying bug (only buys spells closest to top of list)
+- ~~fix spell buying bug (only buys spells closest to top of list)~~
 - spell cast function -- In Progress
 - turn counter/floor counter UI
 - spell upgrades -- In Progress

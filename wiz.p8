@@ -91,6 +91,7 @@ function set_state(state)
 		turn += 1
 		tframe=1
 	elseif state == "menu" then
+		menu_vertical_index = player.spell_index
 	elseif state == "cast" then
 	elseif state == "gameover" then
 	end
@@ -627,14 +628,22 @@ function update_menu()
 		else
 			menu_tab_index -= 1
 		end
-		menu_vertical_index=1
+		if menu_tab_index == 1 then 
+			menu_vertical_index = player.spell_index
+		else
+			menu_vertical_index=1
+		end
 	elseif btnp(1) then
 		if(menu_tab_index == #menu_tabs) then
 			menu_tab_index = 1
 		else
 			menu_tab_index += 1
 		end
-		menu_vertical_index = 1
+		if menu_tab_index == 1 then 
+			menu_vertical_index = player.spell_index
+		else
+			menu_vertical_index = 1
+		end
 	elseif btnp(5) then
 		menu_vertical_index = 1
 		menu_tab_index = 1
@@ -645,7 +654,7 @@ function update_menu()
 				player.spell_index = menu_vertical_index
 			elseif menu_vertical_index>#player.spells and spellbook[menu_vertical_index].spcost <= player.sp then
 				player.sp-= spellbook[menu_vertical_index].spcost
-				add(player.spells, deepcopy(spellbook[menu_vertical_index]));
+				acquire_spell(menu_vertical_index - #player.spells)
 			end
 		elseif menu_tab_index == 2 then 
 			player.items[menu_vertical_index].effect()
@@ -688,7 +697,7 @@ function draw_spell_menu()
 			rectfill(3,22+7*(player.spell_index-1),63,22+6+7*(player.spell_index-1),13)
 		end
 		if i<=#player.spells then
-			print(spellbook[i].name,4,23+7*(i-1),7)
+			print(player.spells[i].name,4,23+7*(i-1),7)
 			if player.spells[i].uses<10 then
 				if player.spells[i].maxuses<10 then
 					print(player.spells[i].uses.."/"..player.spells[i].maxuses,52,23+7*(i-1),7)
@@ -699,11 +708,11 @@ function draw_spell_menu()
 				print(player.spells[i].uses.."/"..player.spells[i].maxuses,44,23+7*(i-1),7)
 			end
 		else
-			print(spellbook[i].name,4,23+7*(i-1),5)
-			if spellbook[i].spcost<10 then
-				print(''..spellbook[i].spcost..'sp',52,23+7*(i-1),5)
+			print(unowned_spells[i-#player.spells].name,4,23+7*(i-1),5)
+			if unowned_spells[i-#player.spells].spcost<10 then
+				print(''..unowned_spells[i-#player.spells].spcost..'sp',52,23+7*(i-1),5)
 			else
-				print(''..spellbook[i].spcost..'sp',48,23+7*(i-1),5)
+				print(''..unowned_spells[i-#player.spells].spcost..'sp',48,23+7*(i-1),5)
 			end
 		end
 	end
@@ -764,7 +773,7 @@ function draw_spell_description()
 	if menu_vertical_index<=#player.spells then
 		spell = player.spells[menu_vertical_index]
 	else
-		spell = spellbook[menu_vertical_index]
+		spell = unowned_spells[menu_vertical_index-#player.spells]
 	end
 	sspr(spell.icon.x,spell.icon.y,8,8,66,23,16,16)
 	print(spell.name, 85, 27, 7)
@@ -920,7 +929,7 @@ function init_player()
 		dir=1,
 		sprites={240, 241},
 		flipx=false,
-		sp=0,
+		sp=3,
 		hp = 50,
 		maxhp = 50,
 		spell_index=1,
@@ -929,9 +938,9 @@ function init_player()
 		-- {item=spriteNum, ammt=num}
 		collide=false
 	}
-	add(player.spells,deepcopy(spellbook[1]))
-	add(player.spells,deepcopy(spellbook[2]))
-	add(player.spells,deepcopy(spellbook[3]))
+	acquire_spell(1)
+	acquire_spell(1)
+	acquire_spell(1)
 	add(mobs,player)
 	local initial_health_pot = deepcopy(items[8])
 	initial_health_pot.count = 1
@@ -1343,9 +1352,17 @@ function init_spellbook()
 					if player.x == x and player.y==y then
 						player.x,player.y = target[1].x, target[1].y
 					end
+					collect_item(player.x, player.y)
 				end
 			}
 		}
+	unowned_spells=deepcopy(spellbook)
+end
+
+function acquire_spell(unowned_spell_index)
+	local spell = unowned_spells[unowned_spell_index]
+	add(player.spells, spell)
+	del(unowned_spells, spell)
 end
 __gfx__
 000000007666666600000000ccccccccccccccccbbbbbbbbbbbbbbbb333333330000000000000000000000000000000000000000000000000000000000000000
