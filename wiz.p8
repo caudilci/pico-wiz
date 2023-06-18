@@ -807,10 +807,11 @@ end
 
 function update_cast()
 	if(#points==0 or origin.x!=player.x or origin.y!=player.y) then
-	 reset_range()
+		reset_range()
 		points=fov(player.x,player.y,player.spells[player.spell_index].range)
 		origin.x = player.x
 		origin.y = player.y
+		set_closest_target_enemy()
 	end
 	if #target == 0 then
 		if player.spells[player.spell_index].spelltype == "ball" then
@@ -882,6 +883,19 @@ function highlight_target()
 		mset(targetp.x, targetp.y, 7)
 	else
 		mset(targetp.x, targetp.y, 5)
+	end
+end
+
+function set_closest_target_enemy()
+	for mob in all(mobs) do
+		if mob != player then
+			for point in all(points) do
+				if mob.x == point.x and mob.y == point.y then
+					targetp.x, targetp.y = point.x, point.y
+					return
+				end
+			end
+		end
 	end
 end
 
