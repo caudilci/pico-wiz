@@ -24,7 +24,7 @@ This is the first game I plan on completing in the pico-8 engine, with the end g
 - title screen and pre-game-start options
 - adjust spell menu highlighting remove player location from list
 - auto pickup items on level complete -> maybe replacing spell cast functionality
-- auto target nearest enemy on cast
+- auto target ~~nearest~~ enemy on cast
 - polish
 
 ### Stretch Goals
@@ -40,3 +40,6 @@ This is the first game I plan on completing in the pico-8 engine, with the end g
 - enough spells to scroll menu
 - usable vs key items?
 - final boss?
+
+### Known Bugs
+- ball spells play cast animation on walls
