@@ -63,6 +63,7 @@ function _draw()
 		draw_enemy_health()
 	end
 	draw_hp(0,0,0,6,6,true)
+	draw_floor()
 	draw_selected_spell()
 	draw_debug()
 	if gamestate == "turn" then
@@ -104,6 +105,18 @@ function draw_hp(x,y,cb,co,ct,withoutline)
 		rect(x,y,x+get_hp_draw_offset()+29,y+8,co)
 	end
 	print("♥"..mobs[1].hp.."/"..mobs[1].maxhp, x+1,y+2,ct)
+end
+
+function draw_floor()
+	if floor >= 10 then
+		rectfill(56,0,70,8,0)
+		rect(56,0,70,8,6)
+		print('f'..floor, 58,2,6)
+	else
+		rectfill(58,0,68,8,0)
+		rect(58,0,68,8,6)
+		print('f'..floor, 60,2,6)
+	end
 end
 
 function draw_selected_spell()
@@ -875,8 +888,6 @@ function highlight_target()
 		local flag = fget(mget(point.x,point.y))
 		if flag != 1 then
 			mset(point.x,point.y,5)
-		else
-			mset(point.x,point.y,6)
 		end
 	end
 	if frame%30<15 then
@@ -904,8 +915,6 @@ function reset_target()
 		local flag = fget(mget(point.x,point.y))
 		if flag != 1 then
 			mset(point.x,point.y,2)
-		else
-			mset(point.x,point.y,1)
 		end
 	end
 	target = {}
