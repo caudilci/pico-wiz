@@ -887,9 +887,9 @@ function highlight_target()
 end
 
 function set_closest_target_enemy()
-	for mob in all(mobs) do
-		if mob != player then
-			for point in all(points) do
+	for point in all(points) do
+		for mob in all(mobs) do
+			if mob != player then
 				if mob.x == point.x and mob.y == point.y then
 					targetp.x, targetp.y = point.x, point.y
 					return
