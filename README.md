@@ -21,7 +21,7 @@ This is the first game I plan on completing in the pico-8 engine, with the end g
 - enemy spells -- In Progress
 - world gen -- In Progress
 - death screen/handling
-- title screen and pre-game-start options
+- ~~title screen~~
 - adjust spell menu highlighting remove player location from list
 - auto pickup items on level complete -> maybe replacing spell cast functionality
 - auto target ~~nearest~~ enemy on cast
@@ -43,3 +43,4 @@ This is the first game I plan on completing in the pico-8 engine, with the end g
 
 ### Known Bugs
 - ball spells play cast animation on walls
+- some visible tiles in cast rage are inaccessible
