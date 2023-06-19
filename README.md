@@ -15,12 +15,12 @@ This is the first game I plan on completing in the pico-8 engine, with the end g
 - ~~add items as their own object like spells~~
 - ~~fix spell buying bug (only buys spells closest to top of list)~~
 - spell cast function -- In Progress
-- turn counter/floor counter UI
-- spell upgrades -- In Progress
+- ~~turn counter/floor counter UI~~
+- ~~spell upgrades~~
 - spell cooldown (for enemies) -- In Progress
 - enemy spells -- In Progress
 - world gen -- In Progress
-- death screen/handling
+- ~~death screen/handling~~
 - ~~title screen~~
 - adjust spell menu highlighting remove player location from list
 - auto pickup items on level complete -> maybe replacing spell cast functionality
@@ -44,3 +44,4 @@ This is the first game I plan on completing in the pico-8 engine, with the end g
 ### Known Bugs
 - ball spells play cast animation on walls
 - some visible tiles in cast rage are inaccessible
+- sometimes animation will be delayed when killing last enemy on floor
