@@ -46,3 +46,4 @@ This is the first game I plan on completing in the pico-8 engine, with the end g
 - some visible tiles in cast rage are inaccessible
 - sometimes animation will be delayed when killing last enemy on floor
 - mob sprites aren't properly flipped according to movement direction
+- spell animations and mob movement are played at the same time
