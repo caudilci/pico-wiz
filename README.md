@@ -45,3 +45,4 @@ This is the first game I plan on completing in the pico-8 engine, with the end g
 - ball spells play cast animation on walls
 - some visible tiles in cast rage are inaccessible
 - sometimes animation will be delayed when killing last enemy on floor
+- mob sprites aren't properly flipped according to movement direction
