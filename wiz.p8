@@ -1,14 +1,15 @@
 pico-8 cartridge // http://www.pico-8.com
 version 41
 __lua__
+
 -- game state
 function _init()
 	frame = 0
 	gamestate = "title"
-	walls = {16, 17, 18, 19, 20, 22}
-	
-	dirx={-1,1,0,0,1,1,-1,-1}
-	diry={0,0,-1,1,-1,1,1,-1}
+	walls = { 16, 17, 18, 19, 20, 22 }
+
+	dirx = { -1, 1, 0, 0, 1, 1, -1, -1 }
+	diry = { 0, 0, -1, 1, -1, 1, 1, -1 }
 	debug = {}
 	--expected data {{{sprites}{{x,y},...}},...}
 	ani_queue = {}
@@ -37,18 +38,18 @@ function _update()
 	frame += 1
 	if gamestate == "standby" then
 		update_player()
-	elseif gamestate== "turn" then
+	elseif gamestate == "turn" then
 		move_complete = move_all_mobs()
-		tframe+=1
+		tframe += 1
 		if move_complete and ani_complete then
 			set_state("standby")
 		end
 		--move enemies
-	elseif gamestate=="menu" then
+	elseif gamestate == "menu" then
 		update_menu()
-	elseif gamestate=="cast" then
+	elseif gamestate == "cast" then
 		update_cast()
-	elseif gamestate=="gameover" then
+	elseif gamestate == "gameover" then
 		gameover()
 	elseif gamestate == "title" then
 		title()
@@ -69,7 +70,7 @@ function _draw()
 	if draw_health_bars then
 		draw_enemy_health()
 	end
-	draw_hp(0,0,0,6,6,true)
+	draw_hp(0, 0, 0, 6, 6, true)
 	draw_floor()
 	draw_selected_spell()
 	draw_debug()
@@ -77,7 +78,7 @@ function _draw()
 		ani_complete = animations(tframe)
 	elseif gamestate == "menu" then
 		draw_menu()
-	elseif gamestate=="cast" then
+	elseif gamestate == "cast" then
 		draw_cast()
 	end
 end
@@ -89,7 +90,7 @@ function set_state(state)
 		if #mobs == 1 then
 			for item in all(floor_items) do
 				if item.sprite == 52 then
-					add_item(item.x,item.y, 7)
+					add_item(item.x, item.y, 7)
 					del(floor_items, item)
 				end
 			end
@@ -97,7 +98,7 @@ function set_state(state)
 	elseif state == "turn" then
 		update_enemies()
 		turn += 1
-		tframe=1
+		tframe = 1
 	elseif state == "menu" then
 		menu_vertical_index = player.spell_index
 	elseif state == "cast" then
@@ -107,23 +108,23 @@ function set_state(state)
 	gamestate = state
 end
 
-function draw_hp(x,y,cb,co,ct,withoutline)
+function draw_hp(x, y, cb, co, ct, withoutline)
 	if withoutline then
-		rectfill(x,y, x+get_hp_draw_offset()+29,y+8,cb)
-		rect(x,y,x+get_hp_draw_offset()+29,y+8,co)
+		rectfill(x, y, x + get_hp_draw_offset() + 29, y + 8, cb)
+		rect(x, y, x + get_hp_draw_offset() + 29, y + 8, co)
 	end
-	print("♥"..player.hp.."/"..player.maxhp, x+1,y+2,ct)
+	print("" .. player.hp .. "/" .. player.maxhp .. "♥", x + 2, y + 2, ct)
 end
 
 function draw_floor()
 	if floor >= 10 then
-		rectfill(56,0,70,8,0)
-		rect(56,0,70,8,6)
-		print('f'..floor, 58,2,6)
+		rectfill(56, 0, 70, 8, 0)
+		rect(56, 0, 70, 8, 6)
+		print('f' .. floor, 58, 2, 6)
 	else
-		rectfill(58,0,68,8,0)
-		rect(58,0,68,8,6)
-		print('f'..floor, 60,2,6)
+		rectfill(58, 0, 68, 8, 0)
+		rect(58, 0, 68, 8, 6)
+		print('f' .. floor, 60, 2, 6)
 	end
 end
 
@@ -137,13 +138,13 @@ function draw_selected_spell()
 		box_color1 = 1
 		box_color2 = 12
 	end
-	rectfill(118,0,127,9,box_color1)
-	rect(118,0,127,9,box_color2)
-	sspr(spell.icon.x,spell.icon.y,8,8,119,1,8,8)
+	rectfill(118, 0, 127, 9, box_color1)
+	rect(118, 0, 127, 9, box_color2)
+	sspr(spell.icon.x, spell.icon.y, 8, 8, 119, 1, 8, 8)
 end
 
 function draw_debug()
-	cursor(0,10)
+	cursor(0, 10)
 	color(8)
 	for txt in all(debug) do
 		print(txt)
@@ -157,12 +158,12 @@ function draw_gameover()
 	print("press ❎ to start over")
 	print("")
 	print("stats:")
-	print("floor:"..floor)
-	print("max hp:"..player.maxhp)
-	print("spells owned:"..#player.spells)
-	print("spells cast:"..spells_cast)
-	print("enemies killed:"..enemies_killed)
-	print("items used:"..items_used)
+	print("floor:" .. floor)
+	print("max hp:" .. player.maxhp)
+	print("spells owned:" .. #player.spells)
+	print("spells cast:" .. spells_cast)
+	print("enemies killed:" .. enemies_killed)
+	print("items used:" .. items_used)
 end
 
 function gameover()
@@ -188,11 +189,11 @@ function animations(tframe)
 		return true
 	end
 	for pair in all(ani_queue) do
-		local sprite = get_frame(tframe-1,pair[1],2)
+		local sprite = get_frame(tframe - 1, pair[1], 2)
 		for point in all(pair[2]) do
-			spr(sprite,point.x*8,point.y*8,1,1)
-		end	
-		if sprite == pair[1][#pair[1]] or #pair[2]==0 then
+			spr(sprite, point.x * 8, point.y * 8, 1, 1)
+		end
+		if sprite == pair[1][#pair[1]] or #pair[2] == 0 then
 			del(ani_queue, pair)
 		else
 			unfinished = true
@@ -225,75 +226,75 @@ function init_items()
 	items = {
 		{
 			-- health upgrade
-			sprite=48,
-			on_pickup = function ()
+			sprite = 48,
+			on_pickup = function()
 				player.hp += 25
 				player.maxhp += 25
 			end
 		},
 		{
-			name="dmg up",
-			description="permanently increases dmg of current spell",
-			sprite=54, 
-			icon= {x=48,y=24},
-			effect = function ()
+			name = "dmg up",
+			description = "permanently increases dmg of current spell",
+			sprite = 54,
+			icon = { x = 48, y = 24 },
+			effect = function()
 				player.spells[player.spell_index].dmg += 2
 			end
 		},
 		{
-			name="uses up",
-			description="permanently increases uses of current spell",
-			sprite=55, 
-			icon= {x=56,y=24},
-			effect = function ()
+			name = "uses up",
+			description = "permanently increases uses of current spell",
+			sprite = 55,
+			icon = { x = 56, y = 24 },
+			effect = function()
 				player.spells[player.spell_index].uses += 2
 				player.spells[player.spell_index].maxuses += 2
 			end
 		},
 		{
-			name="range up",
-			description="permanently increases uses of current spell",
-			sprite=56, 
-			icon= {x=64,y=24},
-			effect = function ()
+			name = "range up",
+			description = "permanently increases uses of current spell",
+			sprite = 56,
+			icon = { x = 64, y = 24 },
+			effect = function()
 				player.spells[player.spell_index].range += 2
 			end
 		},
 		{
 			-- spell point
-			sprite=49,
-			on_pickup = function ()
+			sprite = 49,
+			on_pickup = function()
 				player.sp += 1
 			end
 		},
 		{
 			-- closed portal
-			sprite=52,
+			sprite = 52
 		},
 		{
 			-- open portal
-			sprite=53,
-			on_pickup = function ()
+			sprite = 53,
+			on_pickup = function()
 				floor += 1
-				floor_items={}
+				floor_items = {}
 				init_world()
 			end
 		},
 		{
-			name="health pot",
-			description="refills health",
-			sprite=50, 
-			icon= {x=16,y=24},
-			effect = function ()
+			name = "health pot",
+			description = "refills health",
+			sprite = 50,
+			icon = { x = 16, y = 24 },
+			effect = function()
 				player.hp = player.maxhp
 			end
 		},
 		{
-			name="mana pot",
-			description="refills spell uses for all spells",
-			sprite=51,
-			icon={x=24, y=24},
-			effect= function ()
+			name = "mana pot",
+			description = "refills spell uses for all spells",
+			sprite = 51,
+			icon = { x = 24, y = 24 },
+			effect = function()
 				for spell in all(player.spells) do
 					spell.uses = spell.maxuses
 				end
@@ -302,15 +303,15 @@ function init_items()
 	}
 end
 
-function add_item(x,y,type)
+function add_item(x, y, type)
 	local baseitem = items[type]
 	local item = deepcopy(baseitem)
-	item.x=x
-	item.y=y
-	add(floor_items,item)
+	item.x = x
+	item.y = y
+	add(floor_items, item)
 end
 
-function collect_item(x,y)
+function collect_item(x, y)
 	local item = false
 	for i in all(floor_items) do
 		if i.x == x and i.y == y then
@@ -329,23 +330,21 @@ function collect_item(x,y)
 				end
 			end
 			if not already_owned and item.sprite != 52 then
-				item.count=1
+				item.count = 1
 				add(player.items, item)
 			end
 		end
 		if item.sprite != 52 then
-			del(floor_items,item)
+			del(floor_items, item)
 		end
 	end
 end
 
 function draw_items()
 	for item in all(floor_items) do
-		spr(item.sprite,item.x*8,item.y*8)
+		spr(item.sprite, item.x * 8, item.y * 8)
 	end
 end
-
-
 
 -->8
 -- helper functions
@@ -353,9 +352,9 @@ end
 function chunk_string(chunk_size, string)
 	local chunks = {}
 	local prev_index = 1
-	for i=chunk_size, #string, chunk_size do
+	for i = chunk_size, #string, chunk_size do
 		add(chunks, sub(string, prev_index, i))
-		prev_index = i+1
+		prev_index = i + 1
 	end
 	add(chunks, sub(string, prev_index))
 	return chunks
@@ -372,30 +371,30 @@ function get_hp_draw_offset()
 	return 0
 end
 
-function get_frame(sframe,sprites,speed)
- return	sprites[flr(sframe/speed)%#sprites+1]
+function get_frame(sframe, sprites, speed)
+	return sprites[flr(sframe / speed) % #sprites + 1]
 end
 
 function detect_collision(mob)
-	sprite = mget(mob.x,mob.y)
-	if fget(sprite,0) then
-			return true
+	sprite = mget(mob.x, mob.y)
+	if fget(sprite, 0) then
+		return true
 	end
 	for m in all(mobs) do
-		if m!=mob and mob.x == m.x and mob.y==m.y then
+		if m != mob and mob.x == m.x and mob.y == m.y then
 			return m
 		end
 	end
 	return false
 end
 
-function detect_collision(x,y)
-	sprite = mget(x,y)
-	if fget(sprite,0) then
-			return true
+function detect_collision(x, y)
+	sprite = mget(x, y)
+	if fget(sprite, 0) then
+		return true
 	end
 	for m in all(mobs) do
-		if x == m.x and y==m.y then
+		if x == m.x and y == m.y then
 			return m
 		end
 	end
@@ -404,15 +403,15 @@ end
 
 function shallowcopy(t)
 	local t2 = {}
-	for k,v in pairs(t) do
-	  t2[k] = v
+	for k, v in pairs(t) do
+		t2[k] = v
 	end
 	return t2
 end
 
 function deepcopy(t)
 	local t2 = {}
-	for k,v in pairs(t) do
+	for k, v in pairs(t) do
 		if type(v) == "table" then
 			t2[k] = deepcopy(v)
 		else
@@ -422,78 +421,77 @@ function deepcopy(t)
 	return t2
 end
 
-function fov(x,y,r)
-	local dx,dy
+function fov(x, y, r)
+	local dx, dy
 	local visible = {}
-	for i=0,360 do
-		dx=cos(i/360)
-		dy=sin(i/360)
-		local result = perffov(dx,dy,x,y,r)
+	for i = 0, 360 do
+		dx = cos(i / 360)
+		dy = sin(i / 360)
+		local result = perffov(dx, dy, x, y, r)
 		for point in all(result) do
 			if not includes_point(visible, point) then
-					add(visible,point)
-				end
+				add(visible, point)
+			end
 		end
 	end
 	return visible
 end
 
-function perffov(x,y,px,py,r)
-	local ox,oy
+function perffov(x, y, px, py, r)
+	local ox, oy
 	local visible = {}
-	ox=px+0.5
-	oy=py+0.5
-	for i=0,r do
-		local flag = fget(mget(ox,oy))
+	ox = px + 0.5
+	oy = py + 0.5
+	for i = 0, r do
+		local flag = fget(mget(ox, oy))
 		if flag != 1 then
-			add(visible,{x=flr(ox),y=flr(oy)})
+			add(visible, { x = flr(ox), y = flr(oy) })
 		else
-			break	
+			break
 		end
-		ox+=x
-		oy+=y
+		ox += x
+		oy += y
 	end
 	return visible
 end
 
-
-function distance(x,y,x1,y1)
-	local dx = x1-x
-	local dy = y1-y
-	return sqrt((dx*dx)+(dy*dy))
+function distance(x, y, x1, y1)
+	local dx = x1 - x
+	local dy = y1 - y
+	return sqrt(dx * dx + dy * dy)
 end
 
-function in_circle(r,cx,cy,x,y) 
-	local xpart=x-cx
-	local ypart=y-cy
-	local result = (xpart*xpart)+(ypart*ypart)
-	return result<=r*r
+function in_circle(r, cx, cy, x, y)
+	local xpart = x - cx
+	local ypart = y - cy
+	local result = xpart * xpart + ypart * ypart
+	return result <= r * r
 end
 
-function normalize(x,y)
-	local magnitude = flr(sqrt(x*x+y*y))
-	return x/magnitude, y/magnitude
+function normalize(x, y)
+	local magnitude = flr(sqrt(x * x + y * y))
+	return x / magnitude, y / magnitude
 end
 
-function is_visible(x,y,x1,y1,range)
-	if includes_point(fov(x,y,range), {x=x1, y=y1}) then
+function is_visible(x, y, x1, y1, range)
+	if includes_point(fov(x, y, range), { x = x1, y = y1 }) then
 		return true
 	end
 	return false
 end
 
-function get_circle_points(cx,cy,r)
+function get_circle_points(cx, cy, r)
 	local circp = {}
-	add(circp,{x=cx,y=cy})	
-	for x=cx-r,cx do
-		for y=cy-r, cy do
-			if(((x-cx)*(x-cx)+(y-cy)*(y-cy))<=r*r) then
-				xsym = cx - (x-cx)
-				ysym = cy - (y-cy)
-				add(circp, {x=x,y=y})
-				add(circp, {x=x,y=ysym})
-				add(circp, {x=xsym, y=y})
-				add(circp, {x=xsym, y=ysym})
+	add(circp, { x = cx, y = cy })
+	for x = cx - r, cx do
+		for y = cy - r, cy do
+			if (x - cx) * (x - cx) + (y - cy) * (y - cy) <= r * r then
+				xsym = cx - (x - cx)
+				ysym = cy - (y - cy)
+				add(circp, { x = x, y = y })
+				add(circp, { x = x, y = ysym })
+				add(circp, { x = xsym, y = y })
+				add(circp, { x = xsym, y = ysym })
 			end
 		end
 	end
@@ -501,24 +499,24 @@ function get_circle_points(cx,cy,r)
 end
 
 --TODO: do better
-function get_line_points(x1,y1,x2,y2)
-	local path = {{x=x1,y=y1}}
-	local i=2
-	while not includes_point(path, {x=x2,y=y2}) do 
-		local x,y = getcloser(path[i-1].x, path[i-1].y, x2,y2)
-		add(path,{x=x,y=y})
-		i+=1
+function get_line_points(x1, y1, x2, y2)
+	local path = { { x = x1, y = y1 } }
+	local i = 2
+	while not includes_point(path, { x = x2, y = y2 }) do
+		local x, y = getcloser(path[i - 1].x, path[i - 1].y, x2, y2)
+		add(path, { x = x, y = y })
+		i += 1
 	end
 	return path
 end
 
-function line_points(x1,y1,x2,y2)
-	local r = distance(x1,y1,x2,y2)
-	local dx,dy
+function line_points(x1, y1, x2, y2)
+	local r = distance(x1, y1, x2, y2)
+	local dx, dy
 	local visible = {}
-	local sgnx, sgny = sgn(x2-x1),sgn(y2-y1)
+	local sgnx, sgny = sgn(x2 - x1), sgn(y2 - y1)
 	local startang, endang
-	if sgnx==-1 then
+	if sgnx == -1 then
 		if sgny == -1 then
 			startang = 90
 			endang = 180
@@ -528,65 +526,64 @@ function line_points(x1,y1,x2,y2)
 		end
 	else
 		if sgny == -1 then
-			startang=0
-			endang=90
+			startang = 0
+			endang = 90
 		else
-			startang=270
-			endang=360
+			startang = 270
+			endang = 360
 		end
 	end
-	for i=startang,endang do
-		dx=cos(i/360)
-		dy=sin(i/360)
-		local result = perffov(dx,dy,x1,y1,r)
-		if includes_point(result,{x=x2,y=y2}) then
+	for i = startang, endang do
+		dx = cos(i / 360)
+		dy = sin(i / 360)
+		local result = perffov(dx, dy, x1, y1, r)
+		if includes_point(result, { x = x2, y = y2 }) then
 			for point in all(result) do
 				if not includes_point(visible, point) then
-					add(visible,point)
+					add(visible, point)
 				end
 			end
 			break
 		end
 	end
 	if #visible < 1 then
-		return get_line_points(x1,y1,x2,y2)
+		return get_line_points(x1, y1, x2, y2)
 	end
 	return visible
 end
 
-function inTriangle(x,y,x1,y1,x2,y2,px,py)
-	local s1 = y2-y
-	local s2 = x2-x
-	local s3 = y1-y
-	local s4 = py-y
-	local w1 = (x*s1+s4*s2-px*s1)/(s3*s2-(x1-x)*s1)
-	local w2 = (s4-w1*s4)/s1
-	return w1>=0 and w2 >=0 and (w1+w2)<=1
+function inTriangle(x, y, x1, y1, x2, y2, px, py)
+	local s1 = y2 - y
+	local s2 = x2 - x
+	local s3 = y1 - y
+	local s4 = py - y
+	local w1 = (x * s1 + s4 * s2 - px * s1) / (s3 * s2 - (x1 - x) * s1)
+	local w2 = (s4 - w1 * s4) / s1
+	return w1 >= 0 and w2 >= 0 and w1 + w2 <= 1
 end
 
 -- wa is width in terms of degrees
-function get_cone_points(x,y,x1,y1,wa,r)
+function get_cone_points(x, y, x1, y1, wa, r)
 	local visible = {}
-	local deltax,deltay = x1-x,y1-y
-	local angle = atan2(deltax,deltay)
-	local degang = angle*360
-	local s = degang - wa/2
-	local e = degang + wa/2
-	local countdir = sgn(e-s)
-	for i=s,e,countdir do
-		local dx=cos(i/360)
-		local dy=sin(i/360)
-		local result = perffov(dx,dy,x,y,r)
+	local deltax, deltay = x1 - x, y1 - y
+	local angle = atan2(deltax, deltay)
+	local degang = angle * 360
+	local s = degang - wa / 2
+	local e = degang + wa / 2
+	local countdir = sgn(e - s)
+	for i = s, e, countdir do
+		local dx = cos(i / 360)
+		local dy = sin(i / 360)
+		local result = perffov(dx, dy, x, y, r)
 		for point in all(result) do
 			if not includes_point(visible, point) then
-				add(visible,point)
+				add(visible, point)
 			end
 		end
 	end
-	del(visible,{x=x,y=y})
+	del(visible, { x = x, y = y })
 	return visible
 end
-
 
 function includes_point(array, v)
 	if #array == 0 then
@@ -600,18 +597,18 @@ function includes_point(array, v)
 	return false
 end
 
-function getcloser(x1,y1,x2,y2)
-	local bdst,bx,by =999,0,0
-	for i=1, 4 do
-		local dx,dy = dirx[i],diry[i]
-		local dist = distance(x1+dx,y1+dy,x2,y2)
-		if dist<bdst and fget(mget(x1+dx,y1+dy))!=1 then
+function getcloser(x1, y1, x2, y2)
+	local bdst, bx, by = 999, 0, 0
+	for i = 1, 4 do
+		local dx, dy = dirx[i], diry[i]
+		local dist = distance(x1 + dx, y1 + dy, x2, y2)
+		if dist < bdst and fget(mget(x1 + dx, y1 + dy)) != 1 then
 			bdst = dist
-			bx=x1+dx
-			by=y1+dy
+			bx = x1 + dx
+			by = y1 + dy
 		end
 	end
-	return bx,by
+	return bx, by
 end
 
 -->8
@@ -620,8 +617,8 @@ end
 function init_menu()
 	menu_tab_index = 1
 	menu_vertical_index = 1
-	menu_tabs = {"spells", "items"}
-	menu_startx, menu_starty, menu_endx, menu_endy = 2,2,126, 126
+	menu_tabs = { "spells", "items" }
+	menu_startx, menu_starty, menu_endx, menu_endy = 2, 2, 126, 126
 	tab_menu_height = 11
 	status_menu_heigt = 11
 	-- in_upgrade_menu = false
@@ -632,50 +629,46 @@ function update_menu()
 		if menu_tab_index == 1 then
 			if menu_vertical_index == #spellbook then
 				menu_vertical_index = 1
-			else 
+			else
 				menu_vertical_index += 1
 			end
-		elseif menu_tab_index == 2 then 
+		elseif menu_tab_index == 2 then
 			if menu_vertical_index == #player.items then
 				menu_vertical_index = 1
-			else 
+			else
 				menu_vertical_index += 1
 			end
 		elseif menu_tab_index == 3 then
-
 		end
-		
 	elseif btnp(2) then
 		if menu_vertical_index == 1 then
 			if menu_tab_index == 1 then
 				menu_vertical_index = #spellbook
-			elseif menu_tab_index == 2 then 
+			elseif menu_tab_index == 2 then
 				menu_vertical_index = #player.items
 			elseif menu_tab_index == 3 then
-
 			end
 		else
 			menu_vertical_index -= 1
 		end
-		
 	elseif btnp(0) then
 		if menu_tab_index == 1 then
 			menu_tab_index = #menu_tabs
 		else
 			menu_tab_index -= 1
 		end
-		if menu_tab_index == 1 then 
+		if menu_tab_index == 1 then
 			menu_vertical_index = player.spell_index
 		else
-			menu_vertical_index=1
+			menu_vertical_index = 1
 		end
 	elseif btnp(1) then
-		if(menu_tab_index == #menu_tabs) then
+		if menu_tab_index == #menu_tabs then
 			menu_tab_index = 1
 		else
 			menu_tab_index += 1
 		end
-		if menu_tab_index == 1 then 
+		if menu_tab_index == 1 then
 			menu_vertical_index = player.spell_index
 		else
 			menu_vertical_index = 1
@@ -686,13 +679,13 @@ function update_menu()
 		set_state("standby")
 	elseif btnp(4) then
 		if menu_tab_index == 1 then
-			if menu_vertical_index<=#player.spells then
+			if menu_vertical_index <= #player.spells then
 				player.spell_index = menu_vertical_index
-			elseif menu_vertical_index>#player.spells and spellbook[menu_vertical_index].spcost <= player.sp then
-				player.sp-= spellbook[menu_vertical_index].spcost
+			elseif menu_vertical_index > #player.spells and spellbook[menu_vertical_index].spcost <= player.sp then
+				player.sp -= spellbook[menu_vertical_index].spcost
 				acquire_spell(menu_vertical_index - #player.spells)
 			end
-		elseif menu_tab_index == 2 then 
+		elseif menu_tab_index == 2 then
 			player.items[menu_vertical_index].effect()
 			items_used += 1
 			if player.items[menu_vertical_index].count == 1 then
@@ -701,19 +694,17 @@ function update_menu()
 				player.items[menu_vertical_index].count -= 1
 			end
 		elseif menu_tab_index == 3 then
-
 		end
-
 	end
 end
 
 function draw_menu()
 	draw_menu_tabs()
 	draw_status_menu()
-	rect(2, 21,64,125,12)
-	rectfill(3,22,63,124,1)
-	rect(64,21,125,75,12)
-	rectfill(65,22,124,124,1)
+	rect(2, 21, 64, 125, 12)
+	rectfill(3, 22, 63, 124, 1)
+	rect(64, 21, 125, 75, 12)
+	rectfill(65, 22, 124, 124, 1)
 	if menu_tab_index == 1 then
 		draw_spell_menu()
 		draw_spell_description()
@@ -721,48 +712,47 @@ function draw_menu()
 		draw_item_menu()
 		draw_item_description()
 	elseif menu_tab_index == 3 then
-
 	end
 end
 
 function draw_spell_menu()
-	for i=1, count(spellbook) do
+	for i = 1, count(spellbook) do
 		-- highlight spell looked at
-		if i==menu_vertical_index then
-			rectfill(3,22+7*(i-1),63,22+6+7*(i-1),12)
-		elseif i==player.spell_index then
-			rectfill(3,22+7*(player.spell_index-1),63,22+6+7*(player.spell_index-1),13)
+		if i == menu_vertical_index then
+			rectfill(3, 22 + 7 * (i - 1), 63, 22 + 6 + 7 * (i - 1), 12)
+		elseif i == player.spell_index then
+			rectfill(3, 22 + 7 * (player.spell_index - 1), 63, 22 + 6 + 7 * (player.spell_index - 1), 13)
 		end
-		if i<=#player.spells then
-			print(player.spells[i].name,4,23+7*(i-1),7)
-			if player.spells[i].uses<10 then
-				if player.spells[i].maxuses<10 then
-					print(player.spells[i].uses.."/"..player.spells[i].maxuses,52,23+7*(i-1),7)
+		if i <= #player.spells then
+			print(player.spells[i].name, 4, 23 + 7 * (i - 1), 7)
+			if player.spells[i].uses < 10 then
+				if player.spells[i].maxuses < 10 then
+					print(player.spells[i].uses .. "/" .. player.spells[i].maxuses, 52, 23 + 7 * (i - 1), 7)
 				else
-					print(player.spells[i].uses.."/"..player.spells[i].maxuses,48,23+7*(i-1),7)
+					print(player.spells[i].uses .. "/" .. player.spells[i].maxuses, 48, 23 + 7 * (i - 1), 7)
 				end
 			else
-				print(player.spells[i].uses.."/"..player.spells[i].maxuses,44,23+7*(i-1),7)
+				print(player.spells[i].uses .. "/" .. player.spells[i].maxuses, 44, 23 + 7 * (i - 1), 7)
 			end
 		else
-			print(unowned_spells[i-#player.spells].name,4,23+7*(i-1),5)
-			if unowned_spells[i-#player.spells].spcost<10 then
-				print(''..unowned_spells[i-#player.spells].spcost..'sp',52,23+7*(i-1),5)
+			print(unowned_spells[i - #player.spells].name, 4, 23 + 7 * (i - 1), 5)
+			if unowned_spells[i - #player.spells].spcost < 10 then
+				print('' .. unowned_spells[i - #player.spells].spcost .. 'sp', 52, 23 + 7 * (i - 1), 5)
 			else
-				print(''..unowned_spells[i-#player.spells].spcost..'sp',48,23+7*(i-1),5)
+				print('' .. unowned_spells[i - #player.spells].spcost .. 'sp', 48, 23 + 7 * (i - 1), 5)
 			end
 		end
 	end
 end
 
 function draw_status_menu()
-	rect(2,2,125,13,12)
-	rectfill(3,3,124,12,1)
-	rect(2,2,125,13,12)
-	rectfill(3,3,124,12,1)
-	draw_hp(3,3,0,0,7,false)
-	spr(items[5].sprite,116,4)
-	print(player.sp, 111,5,7)
+	rect(2, 2, 125, 13, 12)
+	rectfill(3, 3, 124, 12, 1)
+	rect(2, 2, 125, 13, 12)
+	rectfill(3, 3, 124, 12, 1)
+	draw_hp(3, 3, 0, 0, 7, false)
+	spr(items[5].sprite, 116, 4)
+	print(player.sp, 111, 5, 7)
 end
 
 function draw_menu_tabs()
@@ -770,35 +760,35 @@ function draw_menu_tabs()
 	if menu_tab_index == 1 then
 		text_color1, text_color2, background_color1, background_color2 = 7, 6, 12, 1
 	end
-	rectfill(3,13, 64, 21, background_color1)
-	rect(2,13, 65, 21, 12)
+	rectfill(3, 13, 64, 21, background_color1)
+	rect(2, 13, 65, 21, 12)
 	print("spells", 20, 15, text_color1)
-	rectfill(65,13, 125, 21, background_color2)
-	rect(64,13, 125, 21, 12)
+	rectfill(65, 13, 125, 21, background_color2)
+	rect(64, 13, 125, 21, 12)
 	print("items", 85, 15, text_color2)
 end
 
 function draw_item_menu()
-	for i=1, count(player.items) do
+	for i = 1, count(player.items) do
 		-- highlight spell looked at
-		if i==menu_vertical_index then
-			rectfill(3,22+7*(i-1),63,22+6+7*(i-1),12)
+		if i == menu_vertical_index then
+			rectfill(3, 22 + 7 * (i - 1), 63, 22 + 6 + 7 * (i - 1), 12)
 		end
-		print(player.items[i].name,4,23+7*(i-1),7)
-		if player.items[i].count<10 then
-			print(player.items[i].count,59,23+7*(i-1),7)
+		print(player.items[i].name, 4, 23 + 7 * (i - 1), 7)
+		if player.items[i].count < 10 then
+			print(player.items[i].count, 59, 23 + 7 * (i - 1), 7)
 		else
-			print(player.items[i].count,55,23+7*(i-1),7)
+			print(player.items[i].count, 55, 23 + 7 * (i - 1), 7)
 		end
 	end
 end
 
 function draw_item_description()
-	local item=player.items[menu_vertical_index]
+	local item = player.items[menu_vertical_index]
 	if item then
-		sspr(item.icon.x,item.icon.y,8,8,66,23,16,16)
+		sspr(item.icon.x, item.icon.y, 8, 8, 66, 23, 16, 16)
 		print(item.name, 85, 27, 7)
-		cursor(66,41)
+		cursor(66, 41)
 		color(7)
 		local description_chunks = chunk_string(15, item.description)
 		foreach(description_chunks, print)
@@ -807,90 +797,87 @@ end
 
 function draw_spell_description()
 	local spell = {}
-	if menu_vertical_index<=#player.spells then
+	if menu_vertical_index <= #player.spells then
 		spell = player.spells[menu_vertical_index]
 	else
-		spell = unowned_spells[menu_vertical_index-#player.spells]
+		spell = unowned_spells[menu_vertical_index - #player.spells]
 	end
-	sspr(spell.icon.x,spell.icon.y,8,8,66,23,16,16)
+	sspr(spell.icon.x, spell.icon.y, 8, 8, 66, 23, 16, 16)
 	print(spell.name, 85, 27, 7)
-	cursor(66,41)
+	cursor(66, 41)
 	color(7)
 	local description_chunks = chunk_string(15, spell.description)
 	foreach(description_chunks, print)
 	print('')
-	print('uses: '..spell.uses..'/'..spell.maxuses)
-	print('dmg: '..spell.dmg)
-	print('range: '..spell.range)
+	print('uses: ' .. spell.uses .. '/' .. spell.maxuses)
+	print('dmg: ' .. spell.dmg)
+	print('range: ' .. spell.range)
 	if spell.spelltype == "ball" then
-		print('radius: '..spell.radius)
+		print('radius: ' .. spell.radius)
 	elseif spell.spelltype == "bolt" then
-		
 	elseif spell.spelltype == "fan" then
 		-- angle isn't really relevent to player
-		print('spread: '..spell.angle,7)
+		print('spread: ' .. spell.angle, 7)
 	end
 end
-
 
 -->8
 -- cast
 function init_cast()
-	 points = {}
-	 target = {}
-	 targetp = {x=player.x,y=player.y}
-	 origin = {x=player.x,y=player.y}
+	points = {}
+	target = {}
+	targetp = { x = player.x, y = player.y }
+	origin = { x = player.x, y = player.y }
 end
 
 function update_cast()
-	if(#points==0 or origin.x!=player.x or origin.y!=player.y) then
+	if #points == 0 or origin.x != player.x or origin.y != player.y then
 		reset_range()
-		points=fov(player.x,player.y,player.spells[player.spell_index].range)
+		points = fov(player.x, player.y, player.spells[player.spell_index].range)
 		origin.x = player.x
 		origin.y = player.y
 		set_closest_target_enemy()
 	end
 	if #target == 0 then
 		if player.spells[player.spell_index].spelltype == "ball" then
-			target = get_circle_points(targetp.x,targetp.y,player.spells[player.spell_index].radius)
+			target = get_circle_points(targetp.x, targetp.y, player.spells[player.spell_index].radius)
 		elseif player.spells[player.spell_index].spelltype == "bolt" then
-			target = line_points(player.x,player.y, targetp.x, targetp.y)
+			target = line_points(player.x, player.y, targetp.x, targetp.y)
 		elseif player.spells[player.spell_index].spelltype == "fan" then
-			target = get_cone_points(player.x,player.y,targetp.x,targetp.y,player.spells[player.spell_index].angle, player.spells[player.spell_index].range)
+			target = get_cone_points(player.x, player.y, targetp.x, targetp.y, player.spells[player.spell_index].angle, player.spells[player.spell_index].range)
 		end
 	end
-	if(btnp(5))then
+	if btnp(5) then
 		reset_range()
 		reset_target()
 		set_state("standby")
-		
-	elseif(btnp(4))then
+	elseif btnp(4) then
 		player.spells[player.spell_index]:cast()
 		spells_cast += 1
 		reset_range()
 		reset_target()
-		set_state("turn")	
-	elseif(btnp(0))then
+		set_state("turn")
+	elseif btnp(0) then
 		local newx = targetp.x - 1
-		if includes_point(points,{x=newx,y=targetp.y}) then
+		if includes_point(points, { x = newx, y = targetp.y }) then
 			targetp.x = newx
 		end
 		reset_target()
-	elseif(btnp(1))then
+	elseif btnp(1) then
 		local newx = targetp.x + 1
-		if includes_point(points,{x=newx,y=targetp.y}) then
+		if includes_point(points, { x = newx, y = targetp.y }) then
 			targetp.x = newx
 		end
 		reset_target()
-	elseif(btnp(2))then
+	elseif btnp(2) then
 		local newy = targetp.y - 1
-		if includes_point(points,{x=targetp.x,y=newy}) then
+		if includes_point(points, { x = targetp.x, y = newy }) then
 			targetp.y = newy
 		end
 		reset_target()
-	elseif(btnp(3))then
+	elseif btnp(3) then
 		local newy = targetp.y + 1
-		if includes_point(points,{x=targetp.x,y=newy}) then
+		if includes_point(points, { x = targetp.x, y = newy }) then
 			targetp.y = newy
 		end
 		reset_target()
@@ -903,19 +890,19 @@ function draw_cast()
 end
 
 function highlight_range()
- for point in all(points) do
-		mset(point.x,point.y,3)
+	for point in all(points) do
+		mset(point.x, point.y, 3)
 	end
 end
 
 function highlight_target()
 	for point in all(target) do
-		local flag = fget(mget(point.x,point.y))
+		local flag = fget(mget(point.x, point.y))
 		if flag != 1 then
-			mset(point.x,point.y,5)
+			mset(point.x, point.y, 5)
 		end
 	end
-	if frame%30<15 then
+	if frame % 30 < 15 then
 		mset(targetp.x, targetp.y, 7)
 	else
 		mset(targetp.x, targetp.y, 5)
@@ -937,9 +924,9 @@ end
 
 function reset_target()
 	for point in all(target) do
-		local flag = fget(mget(point.x,point.y))
+		local flag = fget(mget(point.x, point.y))
 		if flag != 1 then
-			mset(point.x,point.y,2)
+			mset(point.x, point.y, 2)
 		end
 	end
 	target = {}
@@ -947,13 +934,13 @@ end
 
 function reset_range()
 	for point in all(points) do
-			mset(point.x,point.y,2)
+		mset(point.x, point.y, 2)
 	end
 end
 
 function dmg_mob(damage, targets)
 	for mob in all(mobs) do
-		if mob != player and includes_point(targets,{x=mob.x,y=mob.y})  then
+		if mob != player and includes_point(targets, { x = mob.x, y = mob.y }) then
 			mob.hp -= damage
 		end
 	end
@@ -961,35 +948,34 @@ end
 
 function cast_spell(spell)
 	spell.uses -= 1
-	add(ani_queue, {spell.ani, target})
+	add(ani_queue, { spell.ani, target })
 	dmg_mob(spell.dmg, target)
 end
-
 
 -->8
 -- mob
 function init_player()
 	player = {
-		x=3,
-		y=3,
-		ox=0,
-		oy=0,
-		dir=1,
-		sprites={240, 241},
-		flipx=false,
-		sp=3,
+		x = 3,
+		y = 3,
+		ox = 0,
+		oy = 0,
+		dir = 1,
+		sprites = { 240, 241 },
+		flipx = false,
+		sp = 3,
 		hp = 50,
 		maxhp = 50,
-		spell_index=1,
-		spells={},
-		items={},
+		spell_index = 1,
+		spells = {},
+		items = {},
 		-- {item=spriteNum, ammt=num}
-		collide=false
+		collide = false
 	}
 	acquire_spell(1)
 	acquire_spell(1)
 	acquire_spell(1)
-	add(mobs,player)
+	add(mobs, player)
 	local initial_health_pot = deepcopy(items[8])
 	initial_health_pot.count = 1
 	local initial_mana_pot = deepcopy(items[9])
@@ -1002,25 +988,25 @@ function update_player()
 	if player.hp <= 0 then
 		set_state("gameover")
 	end
-	if(btnp(2)) then
-		update_mob_pos(player, player.x,player.y-1)
-		collect_item(player.x,player.y)
+	if btnp(2) then
+		update_mob_pos(player, player.x, player.y - 1)
+		collect_item(player.x, player.y)
 		set_state("turn")
-	elseif(btnp(3)) then
-		update_mob_pos(player, player.x,player.y+1)
-		collect_item(player.x,player.y)
+	elseif btnp(3) then
+		update_mob_pos(player, player.x, player.y + 1)
+		collect_item(player.x, player.y)
 		set_state("turn")
-	elseif(btnp(0)) then
-		update_mob_pos(player, player.x-1,player.y)
-		collect_item(player.x,player.y)
+	elseif btnp(0) then
+		update_mob_pos(player, player.x - 1, player.y)
+		collect_item(player.x, player.y)
 		set_state("turn")
-	elseif(btnp(1)) then
-		update_mob_pos(player, player.x+1,player.y)
-		collect_item(player.x,player.y)
+	elseif btnp(1) then
+		update_mob_pos(player, player.x + 1, player.y)
+		collect_item(player.x, player.y)
 		set_state("turn")
-	elseif(btnp(4)) then
+	elseif btnp(4) then
 		set_state("menu")
-	elseif(btnp(5)) then
+	elseif btnp(5) then
 		if player.spells[player.spell_index].uses > 0 then
 			set_state("cast")
 			init_cast()
@@ -1028,69 +1014,69 @@ function update_player()
 	end
 end
 
-function update_mob_pos(mob, x,y)
-	local collide = detect_collision(x,y)
-	local dx,dy = mob.x-x,mob.y-y
-	
-	if(dy>0) then
+function update_mob_pos(mob, x, y)
+	local collide = detect_collision(x, y)
+	local dx, dy = mob.x - x, mob.y - y
+
+	if dy > 0 then
 		if not collide then
-			mob.y=y
-			mob.oy=8
-		elseif mob==player then
-			mob.collide=true
+			mob.y = y
+			mob.oy = 8
+		elseif mob == player then
+			mob.collide = true
 		end
-		mob.dir=3
-	elseif(dy<0) then
+		mob.dir = 3
+	elseif dy < 0 then
 		if not collide then
-			mob.y=y
-			mob.oy=-8
-		elseif mob==player then
-			mob.collide=true
+			mob.y = y
+			mob.oy = -8
+		elseif mob == player then
+			mob.collide = true
 		end
-		mob.dir=4
-	elseif(dx>0) then
+		mob.dir = 4
+	elseif dx > 0 then
 		if not collide then
-			mob.x=x
-			mob.ox=8
-		elseif mob==player then
-			mob.collide=true
-		end
-		mob.flip = false
-		mob.dir=1
-	elseif(dx<0) then
-		if not collide then
-			mob.x=x
-			mob.ox=-8
-		elseif mob==player then
-			mob.collide=true
+			mob.x = x
+			mob.ox = 8
+		elseif mob == player then
+			mob.collide = true
 		end
 		mob.flip = false
-		mob.dir=2
+		mob.dir = 1
+	elseif dx < 0 then
+		if not collide then
+			mob.x = x
+			mob.ox = -8
+		elseif mob == player then
+			mob.collide = true
+		end
+		mob.flip = false
+		mob.dir = 2
 	end
-	if mob != player and collide==player then
+	if mob != player and collide == player then
 		player.hp -= mob.meleedmg
-		mob.collide=true
+		mob.collide = true
 	end
 end
 
 function move_mob(mob)
 	if mob.collide and tframe <= 4 then
-		mob.ox+=dirx[mob.dir]
-		mob.oy+=diry[mob.dir]
+		mob.ox += dirx[mob.dir]
+		mob.oy += diry[mob.dir]
 	else
 		if mob.ox < 0 then
 			mob.ox += 1
 		elseif mob.ox > 0 then
-		mob.ox -= 1
+			mob.ox -= 1
 		end
 		if mob.oy < 0 then
 			mob.oy += 1
 		elseif mob.oy > 0 then
-		mob.oy -= 1
+			mob.oy -= 1
 		end
-		if mob.ox == 0 
-		and mob.oy == 0 then
-			mob.collide=false
+		if mob.ox == 0
+				and mob.oy == 0 then
+			mob.collide = false
 			return true
 		else
 			return false
@@ -1099,75 +1085,75 @@ function move_mob(mob)
 end
 
 function draw_mob(mob)
- local sprite = get_frame(frame,mob.sprites,8)
-	spr(sprite,(mob.x*8)+mob.ox,(mob.y*8)+mob.oy,1,1,mob.flip)
+	local sprite = get_frame(frame, mob.sprites, 8)
+	spr(sprite, mob.x * 8 + mob.ox, mob.y * 8 + mob.oy, 1, 1, mob.flip)
 end
 
 function init_enemies()
-	enemyid=1
+	enemyid = 1
 	enemy_types = {
 		{
 			-- bat
-			dir=1,
-			ox=0,
-			oy=0,
-			sprites={192, 193},
-			flipx=false,
-			spell=nil,
+			dir = 1,
+			ox = 0,
+			oy = 0,
+			sprites = { 192, 193 },
+			flipx = false,
+			spell = nil,
 			hp = 10,
 			maxhp = 10,
-			meleedmg=5,
-			collide=false
+			meleedmg = 5,
+			collide = false
 		},
 		{
 			-- slime
-			dir=1,
-			ox=0,
-			oy=0,
-			sprites={194, 195},
-			flipx=false,
-			spell=nil,
+			dir = 1,
+			ox = 0,
+			oy = 0,
+			sprites = { 194, 195 },
+			flipx = false,
+			spell = nil,
 			hp = 12,
 			maxhp = 12,
-			meleedmg=10,
-			collide=false
+			meleedmg = 10,
+			collide = false
 		},
 		{
 			-- goblin
-			dir=1,
-			ox=0,
-			oy=0,
-			sprites={196, 197},
-			flipx=false,
+			dir = 1,
+			ox = 0,
+			oy = 0,
+			sprites = { 196, 197 },
+			flipx = false,
 			hp = 15,
 			spell = nil,
 			maxhp = 15,
-			meleedmg=15,
-			cooldown=0,
-			collide=false
+			meleedmg = 15,
+			cooldown = 0,
+			collide = false
 		},
 		{
 			-- Tornado
-			dir=1,
-			ox=0,
-			oy=0,
-			sprites={208, 209},
-			flipx=false,
+			dir = 1,
+			ox = 0,
+			oy = 0,
+			sprites = { 208, 209 },
+			flipx = false,
 			hp = 15,
 			maxhp = 15,
-			spell_index=1,
-			meleedmg=15,
-			cooldown=0,
+			spell_index = 1,
+			meleedmg = 15,
+			cooldown = 0,
 			spell = {
-				ani={176,177,178,179},
-				radius=0.5,
-				range=4,
-				dmg=5,
-				cast = function (self, mob)
+				ani = { 176, 177, 178, 179 },
+				radius = 0.5,
+				range = 4,
+				dmg = 5,
+				cast = function(self, mob)
 					if mob.cooldown == 0 then
-						if is_visible(mob.x,mob.y,player.x,player.y, self.range) then
+						if is_visible(mob.x, mob.y, player.x, player.y, self.range) then
 							player.hp -= self.dmg
-							add(ani_queue, {self.ani, {{x=player.x, y=player.y}}})
+							add(ani_queue, { self.ani, { { x = player.x, y = player.y } } })
 							mob.cooldown = 5
 							return true
 						end
@@ -1177,29 +1163,29 @@ function init_enemies()
 					end
 				end
 			},
-			collide=false
+			collide = false
 		}
 	}
 
-	add_enemy(4,4,4)
+	add_enemy(4, 4, 4)
 end
 
-function add_enemy(x,y,type)
+function add_enemy(x, y, type)
 	local id = enemyid + 1
 	local baseenemy = enemy_types[type]
 	local enemy = shallowcopy(baseenemy)
-	enemy.id=id
-	enemy.x=x
-	enemy.y=y
-	add(mobs,enemy)
-	enemyid=id
+	enemy.id = id
+	enemy.x = x
+	enemy.y = y
+	add(mobs, enemy)
+	enemyid = id
 end
 
 function update_enemies()
 	for mob in all(mobs) do
 		if mob.hp <= 0 then
 			enemies_killed += 1
-			del(mobs,mob)
+			del(mobs, mob)
 		else
 			local casted = false
 			if mob.spell then
@@ -1214,7 +1200,7 @@ end
 
 function update_enemy_pos(mob)
 	if mob != player then
-		local x,y = getcloser(mob.x,mob.y, player.x,player.y)
+		local x, y = getcloser(mob.x, mob.y, player.x, player.y)
 		update_mob_pos(mob, x, y)
 	end
 end
@@ -1223,13 +1209,13 @@ function draw_enemy_health()
 	for mob in all(mobs) do
 		if mob != player then
 			if mob.collide then
-				spr(176,mob.x*8,mob.y*8+1)
-				line(mob.x*8+1,mob.y*8+7, mob.x*8+6, mob.y*8+7,0)
-				line(mob.x*8+1,mob.y*8+7, mob.x*8+(mob.hp/mob.maxhp)*6, mob.y*8+7, 8)
+				spr(176, mob.x * 8, mob.y * 8 + 1)
+				line(mob.x * 8 + 1, mob.y * 8 + 7, mob.x * 8 + 6, mob.y * 8 + 7, 0)
+				line(mob.x * 8 + 1, mob.y * 8 + 7, mob.x * 8 + mob.hp / mob.maxhp * 6, mob.y * 8 + 7, 8)
 			else
-				spr(176,mob.x*8+mob.ox,mob.y*8+1+mob.oy)
-				line(mob.x*8+1+mob.ox,mob.y*8+7+mob.oy, mob.x*8+6+mob.ox, mob.y*8+7+mob.oy,0)
-				line(mob.x*8+1+mob.ox,mob.y*8+7+mob.oy, mob.x*8+(mob.hp/mob.maxhp)*6+mob.ox, mob.y*8+7+mob.oy,8)
+				spr(176, mob.x * 8 + mob.ox, mob.y * 8 + 1 + mob.oy)
+				line(mob.x * 8 + 1 + mob.ox, mob.y * 8 + 7 + mob.oy, mob.x * 8 + 6 + mob.ox, mob.y * 8 + 7 + mob.oy, 0)
+				line(mob.x * 8 + 1 + mob.ox, mob.y * 8 + 7 + mob.oy, mob.x * 8 + mob.hp / mob.maxhp * 6 + mob.ox, mob.y * 8 + 7 + mob.oy, 8)
 			end
 		end
 	end
@@ -1240,23 +1226,23 @@ end
 function init_world()
 	read_room_options()
 	generate_world()
-	player.x,player.y = get_rand_open_tile()
+	player.x, player.y = get_rand_open_tile()
 	generate_enemies()
 	generate_items()
 end
 
 function read_room_options()
 	rooms = {}
-	for i=0, 127, 8 do
+	for i = 0, 127, 8 do
 		add(rooms, {})
-		for x=i, i+7 do
+		for x = i, i + 7 do
 			add(rooms[#rooms], {})
-			for y=32, 39 do
-				local color = sget(x,y)
+			for y = 32, 39 do
+				local color = sget(x, y)
 				local current = rooms[#rooms]
-				if (color == 5) then
+				if color == 5 then
 					add(current[#current], rnd(walls))
-				elseif (color == 7) then
+				elseif color == 7 then
 					add(current[#current], 2)
 				end
 			end
@@ -1269,172 +1255,172 @@ function generate_world()
 	local room2 = rnd(rooms)
 	local room3 = rnd(rooms)
 	local room4 = rnd(rooms)
-	for x=1, 8 do
+	for x = 1, 8 do
 		local ystrip1 = room1[x]
 		local ystrip2 = room2[x]
 		local ystrip3 = room3[x]
 		local ystrip4 = room4[x]
-		for y=1, 8 do
-			mset(x-1,y-1, ystrip1[y])
-			mset(x-1,y+7, ystrip2[y])
-			mset(x+7,y-1, ystrip3[y])
-			mset(x+7,y+7, ystrip4[y])
+		for y = 1, 8 do
+			mset(x - 1, y - 1, ystrip1[y])
+			mset(x - 1, y + 7, ystrip2[y])
+			mset(x + 7, y - 1, ystrip3[y])
+			mset(x + 7, y + 7, ystrip4[y])
 		end
 	end
-	for i=0,15 do
-		mset(i,0, rnd(walls))
-		mset(0,i,rnd(walls))
-		mset(i,15, rnd(walls))
-		mset(15,i,rnd(walls))
+	for i = 0, 15 do
+		mset(i, 0, rnd(walls))
+		mset(0, i, rnd(walls))
+		mset(i, 15, rnd(walls))
+		mset(15, i, rnd(walls))
 	end
 end
 
 function get_rand_open_tile()
-	local x,y,is_open = -1, -1, false
+	local x, y, is_open = -1, -1, false
 	while not is_open do
-		x, y = flr(rnd(13))+1, flr(rnd(13))+1
+		x, y = flr(rnd(13)) + 1, flr(rnd(13)) + 1
 		if mget(x, y) == 2 then
 			is_open = true
 		end
 	end
-	return x,y
+	return x, y
 end
 
 function generate_enemies()
-	for i=1, floor do
-		local x,y = get_rand_open_tile()
-		while x == player.x and y==player.y do
-			x,y = get_rand_open_tile()
+	for i = 1, floor do
+		local x, y = get_rand_open_tile()
+		while x == player.x and y == player.y do
+			x, y = get_rand_open_tile()
 		end
 		-- TODO: randomize based on floor
-		add_enemy(x,y, flr(rnd(min(floor, #enemy_types)))+1)
+		add_enemy(x, y, flr(rnd(min(floor, #enemy_types))) + 1)
 	end
 end
 
 function generate_items()
 	-- sp
-	for i=1, 3 do
-		local x,y = get_rand_open_item_tile()
-		add_item(x,y,5)
+	for i = 1, 3 do
+		local x, y = get_rand_open_item_tile()
+		add_item(x, y, 5)
 	end
 	-- upgrade
 	local upgradex, upgradey = get_rand_open_item_tile()
 	-- TODO: update with flr(rnd(max_upgrade_index))+1
-	add_item(upgradex,upgradey, flr(rnd(3))+1)
+	add_item(upgradex, upgradey, flr(rnd(3)) + 1)
 	-- consumable
 	local consumablex, consumabley = get_rand_open_item_tile()
-	add_item(consumablex,consumabley, flr(rnd(2)+8))
+	add_item(consumablex, consumabley, flr(rnd(2) + 8))
 	-- portal
 	local portalx, portaly = get_rand_open_item_tile()
 	add_item(portalx, portaly, 6)
 end
 
 function get_rand_open_item_tile()
-	local x,y = get_rand_open_tile()
-	while (x == player.x and y == player.y) or includes_point(floor_items, {x= x, y=y})  do
-		x,y = get_rand_open_tile()
+	local x, y = get_rand_open_tile()
+	while x == player.x and y == player.y or includes_point(floor_items, { x = x, y = y }) do
+		x, y = get_rand_open_tile()
 	end
-	return x,y
+	return x, y
 end
 
 -->8
 -- spellbook
 function init_spellbook()
-	spelltypes = {"ball", "bolt","fan"}
+	spelltypes = { "ball", "bolt", "fan" }
 	spellbook = {
-			{
-				name="sparks",
-				spcost=1,
-				maxuses=15,
-				uses=15,
-				description="sparks fizzle from your staff",
-				icon={x=0,y=64},
-				ani={160,161,162,163},
-				spelltype = spelltypes[1],
-				radius=0.5,
-				range=4,
-				dmg=0,
-				cooldown=3,
-				cast = cast_spell
-			},
-			--different heal levels that cause enemy status effects
-			--different shield levels
-			--direct damage spells
-			{
-				name="holy bolt",
-				spcost=1,
-				maxuses=30,
-				uses=3,
-				icon={x=8,y=64},
-				description="deals 8 dmg",
-				spelltype= spelltypes[2],
-				ani={144,145,146,147},
-				range=6,
-				radius=1,
-				dmg=8,
-				cast = cast_spell
-			},
-			{
-				name="fire fan",
-				spcost=3,
-				maxuses=15,
-				uses=15,
-				description="fire but fan",
-				icon={x=32,y=64},
-				ani={148,149,150,151},
-				spelltype = spelltypes[3],
-				-- in fan type spells radius is an angle in degrees
-				angle=30,
-				range=4,
-				dmg=5,
-				cast = cast_spell
-			},
-			{
-				name="fire ball",
-				spcost=1,
-				maxuses=9,
-				uses=9,
-				description="fire but ball",
-				icon={x=40,y=64},
-				ani={148,149,150,151},
-				spelltype = spelltypes[1],
-				radius=2,
-				range=4,
-				dmg=5,
-				cast = cast_spell
-			},
-			{
-				name="teleport",
-				spcost=3,
-				maxuses=5,
-				uses=5,
-				description="teleport or swap places with an enemy",
-				icon={x=48,y=64},
-				ani={152,153,154,155},
-				spelltype = spelltypes[1],
-				radius=0.5,
-				range=4,
-				dmg=0,
-				cast = function (spell)
-					spell.uses -= 1
-					add(target, {x = player.x, y= player.y})
-					add(ani_queue, {spell.ani, target})
-					dmg_mob(spell.dmg, target)
-					local x,y = player.x, player.y
-					for mob in all(mobs) do
-						if mob != player and includes_point(target,{x=mob.x,y=mob.y})  then
-							player.x, player.y = mob.x, mob.y
-							mob.x, mob.y = x,y
-						end
+		{
+			name = "sparks",
+			spcost = 1,
+			maxuses = 15,
+			uses = 15,
+			description = "sparks fizzle from your staff",
+			icon = { x = 0, y = 64 },
+			ani = { 160, 161, 162, 163 },
+			spelltype = spelltypes[1],
+			radius = 0.5,
+			range = 4,
+			dmg = 0,
+			cooldown = 3,
+			cast = cast_spell
+		},
+		--different heal levels that cause enemy status effects
+		--different shield levels
+		--direct damage spells
+		{
+			name = "holy bolt",
+			spcost = 1,
+			maxuses = 30,
+			uses = 3,
+			icon = { x = 8, y = 64 },
+			description = "deals 8 dmg",
+			spelltype = spelltypes[2],
+			ani = { 144, 145, 146, 147 },
+			range = 6,
+			radius = 1,
+			dmg = 8,
+			cast = cast_spell
+		},
+		{
+			name = "fire fan",
+			spcost = 3,
+			maxuses = 15,
+			uses = 15,
+			description = "fire but fan",
+			icon = { x = 32, y = 64 },
+			ani = { 148, 149, 150, 151 },
+			spelltype = spelltypes[3],
+			-- in fan type spells radius is an angle in degrees
+			angle = 30,
+			range = 4,
+			dmg = 5,
+			cast = cast_spell
+		},
+		{
+			name = "fire ball",
+			spcost = 1,
+			maxuses = 9,
+			uses = 9,
+			description = "fire but ball",
+			icon = { x = 40, y = 64 },
+			ani = { 148, 149, 150, 151 },
+			spelltype = spelltypes[1],
+			radius = 2,
+			range = 4,
+			dmg = 5,
+			cast = cast_spell
+		},
+		{
+			name = "teleport",
+			spcost = 3,
+			maxuses = 5,
+			uses = 5,
+			description = "teleport or swap places with an enemy",
+			icon = { x = 48, y = 64 },
+			ani = { 152, 153, 154, 155 },
+			spelltype = spelltypes[1],
+			radius = 0.5,
+			range = 4,
+			dmg = 0,
+			cast = function(spell)
+				spell.uses -= 1
+				add(target, { x = player.x, y = player.y })
+				add(ani_queue, { spell.ani, target })
+				dmg_mob(spell.dmg, target)
+				local x, y = player.x, player.y
+				for mob in all(mobs) do
+					if mob != player and includes_point(target, { x = mob.x, y = mob.y }) then
+						player.x, player.y = mob.x, mob.y
+						mob.x, mob.y = x, y
 					end
-					if player.x == x and player.y==y then
-						player.x,player.y = target[1].x, target[1].y
-					end
-					collect_item(player.x, player.y)
 				end
-			}
+				if player.x == x and player.y == y then
+					player.x, player.y = target[1].x, target[1].y
+				end
+				collect_item(player.x, player.y)
+			end
 		}
-	unowned_spells=deepcopy(spellbook)
+	}
+	unowned_spells = deepcopy(spellbook)
 end
 
 function acquire_spell(unowned_spell_index)
@@ -1442,6 +1428,7 @@ function acquire_spell(unowned_spell_index)
 	add(player.spells, spell)
 	del(unowned_spells, spell)
 end
+
 __gfx__
 000000007666666600000000ccccccccccccccccbbbbbbbbbbbbbbbb333333330000000000000000000000000000000000000000000000000000000000000000
 000000006dddddd100000000cccccccccdddddd1bbbbbbbbbdddddd1333333330000000000000000000000000000000000000000000000000000000000000000
