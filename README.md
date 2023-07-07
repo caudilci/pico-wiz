@@ -42,8 +42,8 @@ This is the first game I plan on completing in the pico-8 engine, with the end g
 - final boss?
 
 ### Known Bugs
-- ball spells play cast animation on walls
-- some visible tiles in cast rage are inaccessible
-- sometimes animation will be delayed when killing last enemy on floor
-- mob sprites aren't properly flipped according to movement direction
-- spell animations and mob movement are played at the same time
+- ball spells play cast animation on walls -- solution: add wall filter on cast - fget(mget(targetx, targety)) == wallflag ? do nothing : add to aniqueue
+- some visible tiles in cast range are inaccessible -- solution: add next closest targeting - if within spell range then check squares on either side of the one targeted
+- sometimes animation will be delayed when killing last enemy on floor -- solution tbd
+- mob sprites aren't properly flipped according to movement direction -- solution tbd
+- spell animations and mob movement are played at the same time -- solution tbd
