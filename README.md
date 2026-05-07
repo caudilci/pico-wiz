@@ -19,6 +19,17 @@ This is the first game I plan on completing in the pico-8 engine, with the end g
 - ~~spell upgrades~~
 - spell cooldown (for enemies) -- In Progress
 - enemy spells -- In Progress
+- add spell travel animations
+- summon/friendly minions
+- add enemy attack/damage animations
+- player damage animation
+- player damage alert? maybe red ring around screen
+- add sound effects
+- add biomes
+    - ~~dungeon/crypt~~
+    - forest
+    - graveyard
+- powers/relics
 - world gen -- In Progress
 - ~~death screen/handling~~
 - ~~title screen~~
@@ -47,3 +58,7 @@ This is the first game I plan on completing in the pico-8 engine, with the end g
 - sometimes animation will be delayed when killing last enemy on floor -- solution tbd
 - mob sprites aren't properly flipped according to movement direction -- solution tbd
 - spell animations and mob movement are played at the same time -- solution tbd
+
+### Brainstorming
+- what makes this kind of game fun?
+    - synergies between items/abilities
